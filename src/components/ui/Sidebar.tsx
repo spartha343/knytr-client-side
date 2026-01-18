@@ -1,6 +1,7 @@
 "use client";
 
 import { sidebarItems } from "@/constants/SidebarItems";
+import { ROLE } from "@/types/authTypes";
 import { Layout, Menu } from "antd";
 import { useState } from "react";
 
@@ -10,7 +11,7 @@ const Sidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
 
   //TODO: get the roles dynamically
-  const role = "CUSTOMER";
+  const role = [ROLE.CUSTOMER];
 
   return (
     <Sider
