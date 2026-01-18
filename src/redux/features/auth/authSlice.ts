@@ -5,12 +5,14 @@ interface AuthState {
   dbUser: BackendUser | null;
   syncing: boolean;
   syncError: boolean;
+  signInIntent: boolean;
 }
 
 const initialState: AuthState = {
   dbUser: null,
   syncing: false,
   syncError: false,
+  signInIntent: false,
 };
 
 const authSlice = createSlice({
@@ -27,14 +29,16 @@ const authSlice = createSlice({
       state.syncing = false;
       state.syncError = true;
     },
-
-    // TODO: please ensure syncing are started in appropriate sections
     startSync(state) {
       state.syncing = true;
       state.syncError = false;
     },
+    setSignInIntent: (state, action) => {
+      state.signInIntent = action.payload;
+    },
   },
 });
 
-export const { setDbUser, clearDbUser, startSync } = authSlice.actions;
+export const { setDbUser, clearDbUser, startSync, setSignInIntent } =
+  authSlice.actions;
 export default authSlice.reducer;

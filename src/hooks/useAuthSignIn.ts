@@ -5,10 +5,11 @@ import { notification } from "antd";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/firebase/firebase.config";
-import { useAppDispatch } from "@/redux/hooks";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import {
   clearDbUser,
   setDbUser,
+  setSignInIntent,
   startSync,
 } from "@/redux/features/auth/authSlice";
 import { ensureDbUserExistsAndReturnProfile } from "@/services/auth.service";
@@ -20,6 +21,7 @@ export const useAuthSignIn = () => {
   const dispatch = useAppDispatch();
   const synced = useRef(false);
   const signInNotified = useRef(false);
+  const { signInIntent } = useAppSelector((state) => state.auth);
 
   useEffect(() => {
     if (!user?.uid || synced.current) return;
@@ -35,15 +37,17 @@ export const useAuthSignIn = () => {
         const result = await ensureDbUserExistsAndReturnProfile();
         dispatch(setDbUser(result.data));
 
-        if (!signInNotified.current) {
+        if (signInIntent && !signInNotified.current) {
           signInNotified.current = true; // prevent duplicates
           notification.success({
-            title: "Sign In Successful !",
+            title: "Signed In Successfully !",
             description: "Welcome! Redirecting you...",
             placement: "topRight",
             duration: 5,
             showProgress: true,
           });
+
+          dispatch(setSignInIntent(false));
         }
 
         router.replace(safeRedirect);
@@ -62,7 +66,7 @@ export const useAuthSignIn = () => {
     };
 
     handleSyncUserWithBackend();
-  }, [user?.uid, dispatch, router, searchParams]);
+  }, [user?.uid, dispatch, router, searchParams, signInIntent]);
 
   return {
     user,

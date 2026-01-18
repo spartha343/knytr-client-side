@@ -9,16 +9,17 @@ import {
   useSignInWithMicrosoft,
 } from "react-firebase-hooks/auth";
 import { useEffect, useRef } from "react";
+import { useAuthIntent } from "@/hooks/useAuthIntent";
 
 const SocialSignIn = () => {
   // Hooks per provider
   const [signInWithGoogle, userGoogle, loadingGoogle, errorGoogle] =
     useSignInWithGoogle(auth);
-
   const [signInWithFacebook, userFacebook, loadingFacebook, errorFacebook] =
     useSignInWithFacebook(auth);
   const [signInWithMicrosoft, userMicrosoft, loadingMicrosoft, errorMicrosoft] =
     useSignInWithMicrosoft(auth);
+  const { markIntent } = useAuthIntent();
 
   const shownError = useRef(false);
   // Check if any user is logged in
@@ -52,7 +53,10 @@ const SocialSignIn = () => {
     <Space style={{ marginTop: 15 }} wrap>
       <Button
         type="default"
-        onClick={() => signInWithGoogle()}
+        onClick={async () => {
+          markIntent();
+          await signInWithGoogle();
+        }}
         loading={loadingGoogle}
         disabled={!!user || isLoading}
       >

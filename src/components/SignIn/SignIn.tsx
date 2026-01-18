@@ -13,6 +13,7 @@ import { auth } from "@/firebase/firebase.config";
 import { useEffect, useRef } from "react";
 import SocialSignIn from "../SocialSignIn/SocialSignIn";
 import { useAuthSignIn } from "@/hooks/useAuthSignIn";
+import { useAuthIntent } from "@/hooks/useAuthIntent";
 
 type FormValues = {
   email: string;
@@ -22,11 +23,13 @@ type FormValues = {
 const SignIn = () => {
   const { user } = useAuthSignIn();
   const shownError = useRef(false);
+  const { markIntent } = useAuthIntent();
 
   const [signInWithEmailAndPassword, , loading, error] =
     useSignInWithEmailAndPassword(auth);
 
   const onSubmit: SubmitHandler<FormValues> = async (data: FormValues) => {
+    markIntent();
     shownError.current = false;
     const { email, password } = data;
     await signInWithEmailAndPassword(email, password);
