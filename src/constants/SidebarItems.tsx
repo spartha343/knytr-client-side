@@ -88,7 +88,7 @@ export const sidebarItems = (roles: RoleType[]): MenuProps["items"] => {
   ];
 
   // 🔹 Merge sidebar items based on roles
-  const mergedItems: MenuProps["items"] = [...commonItems];
+  let mergedItems: MenuProps["items"] = [...commonItems];
 
   if (roles.includes(ROLE.CUSTOMER)) mergedItems.push(...customerItems);
   if (roles.includes(ROLE.VENDOR)) mergedItems.push(...vendorItems);
@@ -96,13 +96,13 @@ export const sidebarItems = (roles: RoleType[]): MenuProps["items"] => {
   if (roles.includes(ROLE.SUPER_ADMIN)) mergedItems.push(...superAdminItems);
 
   // Optional: remove duplicates by key
-  // const keys = new Set<string>();
-  // mergedItems = mergedItems.filter((item) => {
-  //   if (!item?.key) return true;
-  //   if (keys.has(item.key.toString())) return false;
-  //   keys.add(item.key.toString());
-  //   return true;
-  // });
+  const keys = new Set<string>();
+  mergedItems = mergedItems.filter((item) => {
+    if (!item?.key) return true;
+    if (keys.has(item.key.toString())) return false;
+    keys.add(item.key.toString());
+    return true;
+  });
 
   return mergedItems;
 };
