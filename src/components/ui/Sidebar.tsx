@@ -1,7 +1,8 @@
 "use client";
 
 import { sidebarItems } from "@/constants/SidebarItems";
-import { ROLE } from "@/types/authTypes";
+import { useAppSelector } from "@/redux/hooks";
+import { RoleType } from "@/types/authTypes";
 import { Layout, Menu } from "antd";
 import { useState } from "react";
 
@@ -9,9 +10,7 @@ const { Sider } = Layout;
 
 const Sidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
-
-  //TODO: get the roles dynamically
-  const role = [ROLE.CUSTOMER];
+  const { dbUser } = useAppSelector((state) => state.auth);
 
   return (
     <Sider
@@ -45,7 +44,7 @@ const Sidebar = () => {
         theme="dark"
         defaultSelectedKeys={["1"]}
         mode="inline"
-        items={sidebarItems(role)}
+        items={sidebarItems(dbUser?.roles as RoleType[])}
       />
     </Sider>
   );

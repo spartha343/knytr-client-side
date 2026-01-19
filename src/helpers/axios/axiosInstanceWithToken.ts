@@ -1,10 +1,10 @@
 import { auth } from "@/firebase/firebase.config";
 import axios from "axios";
+import { getBaseUrl } from "../config/envConfig";
 
 // TODO: handle the NEXT_PUBLIC_API_BASE_URL properly
 const axiosInstanceWithToken = axios.create({
-  baseURL:
-    process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/api/v1",
+  baseURL: getBaseUrl(),
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
@@ -22,7 +22,7 @@ axiosInstanceWithToken.interceptors.request.use(
 
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 export default axiosInstanceWithToken;

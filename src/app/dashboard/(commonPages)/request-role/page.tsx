@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Select,
   Button,
@@ -15,6 +15,7 @@ import {
 import { useRequestableRolesAndPreviousRequests } from "@/hooks/useRequestableRolesAndPreviousRequests";
 import { useAppSelector } from "@/redux/hooks";
 import axiosInstanceWithToken from "@/helpers/axios/axiosInstanceWithToken";
+import dayjs from "dayjs";
 
 const { Title, Text } = Typography;
 
@@ -26,17 +27,53 @@ const RequestRolePage = () => {
   const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const handleRequestRole = async () => {
-    if (!selectedRoleId) {
-      message.warning("Please select a role to request!");
-      return;
+  /**
+   * ✅ Hooks MUST be declared before any return
+   */
+
+  const pendingRoleIds = useMemo(
+    () =>
+      new Set(
+        previousRequests
+          ?.filter((r) => r.status === "PENDING")
+          .map((r) => r.role.id),
+      ),
+    [previousRequests],
+  );
+
+  const filteredRequestableRoles = useMemo(
+    () =>
+      requestableRoles?.filter((role) => !pendingRoleIds.has(role.id)) ?? [],
+    [requestableRoles, pendingRoleIds],
+  );
+
+  const sortedPreviousRequests = useMemo(
+    () =>
+      [...(previousRequests ?? [])].sort(
+        (a, b) =>
+          new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime(),
+      ),
+    [previousRequests],
+  );
+
+  useEffect(() => {
+    if (
+      selectedRoleId &&
+      !filteredRequestableRoles.some((r) => r.id === selectedRoleId)
+    ) {
+      setSelectedRoleId(null);
     }
+  }, [filteredRequestableRoles, selectedRoleId]);
+
+  const handleRequestRole = async () => {
+    if (!selectedRoleId) return;
 
     setSubmitting(true);
     try {
       await axiosInstanceWithToken.post("/roles/request", {
         roleId: selectedRoleId,
       });
+
       message.success("Role requested successfully!");
       setSelectedRoleId(null);
       await refetch();
@@ -49,6 +86,9 @@ const RequestRolePage = () => {
     }
   };
 
+  /**
+   * ✅ Early returns AFTER hooks
+   */
   if (loading) return <Spin tip="Loading roles..." fullscreen />;
 
   if (error)
@@ -60,7 +100,7 @@ const RequestRolePage = () => {
 
       <div>
         <Title level={4}>Your Current Roles:</Title>
-        {dbUser?.roles.length ? (
+        {dbUser?.roles?.length ? (
           <Space>
             {dbUser.roles.map((role) => (
               <Text key={role}>{role}</Text>
@@ -76,12 +116,14 @@ const RequestRolePage = () => {
         <Select
           style={{ width: 300 }}
           placeholder={
-            requestableRoles?.length ? "Select a role" : "No roles available"
+            filteredRequestableRoles.length
+              ? "Select a role"
+              : "No roles available"
           }
-          value={selectedRoleId || undefined}
-          disabled={!requestableRoles?.length}
-          onChange={(value) => setSelectedRoleId(value)}
-          options={requestableRoles?.map((role) => ({
+          value={selectedRoleId ?? undefined}
+          disabled={!filteredRequestableRoles.length}
+          onChange={setSelectedRoleId}
+          options={filteredRequestableRoles.map((role) => ({
             value: role.id,
             label: role.name,
           }))}
@@ -90,42 +132,61 @@ const RequestRolePage = () => {
           type="primary"
           onClick={handleRequestRole}
           loading={submitting}
-          disabled={!requestableRoles?.length}
+          disabled={!selectedRoleId || submitting}
           style={{ marginLeft: 10 }}
         >
           Request Role
         </Button>
       </div>
-
       <div>
         <Title level={4}>Previous Requests:</Title>
         <Table
           locale={{ emptyText: "No role requests yet" }}
-          dataSource={previousRequests}
+          dataSource={sortedPreviousRequests}
           rowKey="id"
           pagination={false}
           columns={[
-            { title: "Role", dataIndex: ["role", "name"], key: "role" },
+            {
+              title: "Role",
+              dataIndex: ["role", "name"],
+              key: "role",
+            },
             {
               title: "Status",
               dataIndex: "status",
               key: "status",
-              render: (status: string) => {
-                const statusMap: Record<
-                  string,
-                  { color: string; label: string }
-                > = {
-                  APPROVED: { color: "green", label: "Approved" },
-                  REJECTED: { color: "red", label: "Rejected" },
-                  PENDING: { color: "orange", label: "Pending Approval" },
-                };
+              render: (status: string, record) => {
+                if (status === "APPROVED") {
+                  return <Tag color="green">Approved</Tag>;
+                }
 
-                const cfg = statusMap[status] || {
-                  color: "default",
-                  label: status,
-                };
+                if (status === "PENDING") {
+                  return <Tag color="orange">Pending Approval</Tag>;
+                }
 
-                return <Tag color={cfg.color}>{cfg.label}</Tag>;
+                if (status === "REJECTED") {
+                  const daysLeft = Math.max(
+                    0,
+                    3 - dayjs().diff(dayjs(record.updatedAt), "day"),
+                  );
+
+                  return (
+                    <Space direction="vertical" size={0}>
+                      <Tag color="red">Rejected</Tag>
+                      {daysLeft > 0 ? (
+                        <Text type="secondary" style={{ fontSize: 12 }}>
+                          Reapply in {daysLeft} day(s)
+                        </Text>
+                      ) : (
+                        <Text type="secondary" style={{ fontSize: 12 }}>
+                          You may reapply now
+                        </Text>
+                      )}
+                    </Space>
+                  );
+                }
+
+                return <Tag>{status}</Tag>;
               },
             },
             {

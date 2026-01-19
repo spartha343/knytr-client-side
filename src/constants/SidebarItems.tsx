@@ -7,9 +7,9 @@ import {
   UserAddOutlined,
 } from "@ant-design/icons";
 import Link from "next/link";
-import { ROLE } from "@/types/authTypes";
+import { ROLE, RoleType } from "@/types/authTypes";
 
-export const sidebarItems = (roles: string[]): MenuProps["items"] => {
+export const sidebarItems = (roles: RoleType[]): MenuProps["items"] => {
   // 1️⃣ Items accessible by any logged-in user
   const commonItems: MenuProps["items"] = [
     {
@@ -66,11 +66,9 @@ export const sidebarItems = (roles: string[]): MenuProps["items"] => {
   const adminItems: MenuProps["items"] = [
     {
       label: (
-        <Link href="/dashboard/approve-role-requests">
-          Approve Role Requests
-        </Link>
+        <Link href="/dashboard/manage-role-requests">Manage Role Requests</Link>
       ),
-      key: "/dashboard/approve-role-requests",
+      key: "/dashboard/manage-role-requests",
       icon: <TableOutlined />,
     },
   ];
@@ -90,7 +88,7 @@ export const sidebarItems = (roles: string[]): MenuProps["items"] => {
   ];
 
   // 🔹 Merge sidebar items based on roles
-  let mergedItems: MenuProps["items"] = [...commonItems];
+  const mergedItems: MenuProps["items"] = [...commonItems];
 
   if (roles.includes(ROLE.CUSTOMER)) mergedItems.push(...customerItems);
   if (roles.includes(ROLE.VENDOR)) mergedItems.push(...vendorItems);
@@ -98,13 +96,13 @@ export const sidebarItems = (roles: string[]): MenuProps["items"] => {
   if (roles.includes(ROLE.SUPER_ADMIN)) mergedItems.push(...superAdminItems);
 
   // Optional: remove duplicates by key
-  const keys = new Set<string>();
-  mergedItems = mergedItems.filter((item) => {
-    if (!item?.key) return true;
-    if (keys.has(item.key.toString())) return false;
-    keys.add(item.key.toString());
-    return true;
-  });
+  // const keys = new Set<string>();
+  // mergedItems = mergedItems.filter((item) => {
+  //   if (!item?.key) return true;
+  //   if (keys.has(item.key.toString())) return false;
+  //   keys.add(item.key.toString());
+  //   return true;
+  // });
 
   return mergedItems;
 };

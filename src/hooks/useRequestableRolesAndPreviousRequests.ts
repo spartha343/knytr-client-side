@@ -14,6 +14,7 @@ export interface PreviousRoleRequest {
   role: RequestableRole;
   status: "PENDING" | "APPROVED" | "REJECTED";
   requestedAt: string;
+  updatedAt: string;
 }
 
 interface RoleResponse {
