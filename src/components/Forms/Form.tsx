@@ -10,13 +10,24 @@ type FormConfig = {
 type FormProps = {
   children: ReactNode;
   submitHandler: SubmitHandler<any>;
+  resetAfterSubmit?: boolean; // ✅ NEW: Optional reset flag
 } & FormConfig;
 
+/**
+ * Reusable Form wrapper using React Hook Form
+ *
+ * @param submitHandler - Function to call with form data on submit
+ * @param defaultValues - Initial form values
+ * @param resolver - Validation schema (e.g., yupResolver)
+ * @param resetAfterSubmit - Whether to reset form after submission (default: false)
+ * @param children - Form fields and buttons
+ */
 const Form = ({
   children,
   submitHandler,
   defaultValues,
   resolver,
+  resetAfterSubmit = false, // ✅ Default to NOT resetting
 }: FormProps) => {
   const formConfig: FormConfig = {};
 
@@ -33,9 +44,14 @@ const Form = ({
 
   const onSubmit = (data: any) => {
     submitHandler(data);
-    reset();
+
+    // ✅ Only reset if explicitly requested
+    if (resetAfterSubmit) {
+      reset();
+    }
   };
 
+  // Update form when defaultValues change
   useEffect(() => {
     if (defaultValues) {
       reset(defaultValues);

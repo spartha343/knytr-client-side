@@ -1,71 +1,71 @@
 "use client";
 
-import { useEnsureDbUser } from "@/hooks/useEnsureDbUser";
+import { ReactNode, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
 import { RoleType } from "@/types/authTypes";
-import { notification, Spin } from "antd";
-import { usePathname, useRouter } from "next/navigation";
-import { ReactNode, useEffect, useMemo } from "react";
 
-interface ProtectedRoutesProps {
+interface IProtectedRoute {
   children: ReactNode;
-  allowedRoles?: RoleType[];
+  requiredRoles?: RoleType[];
 }
 
-const FullscreenLoader = ({ tip }: { tip: string }) => (
-  <Spin size="large" tip={tip} fullscreen />
-);
-
-const ProtectedRoutes = ({ children, allowedRoles }: ProtectedRoutesProps) => {
+/**
+ * Protected Route Wrapper
+ *
+ * Ensures user is authenticated and has required roles before rendering children.
+ * Redirects to sign-in if not authenticated.
+ */
+const ProtectedRoutes = ({ children, requiredRoles }: IProtectedRoute) => {
   const router = useRouter();
-  const pathname = usePathname();
-  const safePathname = pathname && pathname.startsWith("/") ? pathname : "/";
+  const { isAuthenticated, isLoading, dbUser } = useAuth();
 
-  const { firebaseUser, firebaseLoading, dbUser, syncing } = useEnsureDbUser();
+  // Track if we're on the client to prevent hydration mismatch
+  const [isMounted, setIsMounted] = useState(false);
 
-  const hasRequiredRole = useMemo(() => {
-    if (!allowedRoles) return true;
-    if (!dbUser) return false;
-    return allowedRoles.some((role) => dbUser.roles.includes(role));
-  }, [allowedRoles, dbUser]);
+  // Set mounted flag on client-side only
 
-  // 🔐 Redirect logic (side effects)
   useEffect(() => {
-    if (firebaseLoading || syncing) return;
-    if (!firebaseUser) {
-      router.replace(`/sign-in?redirect=${safePathname}`);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    // Wait for client-side mounting and auth check
+    if (!isMounted || isLoading) return;
+
+    // Not authenticated -> redirect to sign-in with return URL
+    if (!isAuthenticated) {
+      const currentPath = window.location.pathname;
+      router.replace(`/sign-in?redirect=${encodeURIComponent(currentPath)}`);
       return;
     }
-    if (dbUser && !hasRequiredRole) {
-      notification.error({
-        title: "Unauthorized !",
-        description: "You don't have permission to access that page !",
-        placement: "topRight",
-        duration: 5,
-        showProgress: true,
-      });
-      router.replace("/");
-      return;
+
+    // Check role requirements
+    if (requiredRoles && requiredRoles.length > 0 && dbUser) {
+      const userRoles = dbUser.roles || [];
+      const hasRequiredRole = requiredRoles.some((role) =>
+        userRoles.includes(role),
+      );
+
+      if (!hasRequiredRole) {
+        router.replace("/unauthorized");
+      }
     }
-  }, [
-    dbUser,
-    firebaseLoading,
-    firebaseUser,
-    hasRequiredRole,
-    safePathname,
-    router,
-    syncing,
-  ]);
+  }, [isMounted, isLoading, isAuthenticated, requiredRoles, dbUser, router]);
 
-  // 🌀 Loading states
-  if (firebaseLoading || syncing) {
-    return <FullscreenLoader tip="Checking your access..." />;
+  // During SSR or initial client render, show nothing
+  // This prevents hydration mismatch
+  if (!isMounted || isLoading) {
+    return null;
   }
 
-  // ⏳ Waiting for redirect
-  if (!firebaseUser || !dbUser || !hasRequiredRole) {
-    return <FullscreenLoader tip="Redirecting..." />;
+  // Not authenticated - don't render (redirect happening)
+  if (!isAuthenticated) {
+    return null;
   }
 
+  // Authenticated and authorized - render children
   return <>{children}</>;
 };
 

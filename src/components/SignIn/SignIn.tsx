@@ -14,6 +14,7 @@ import { useEffect, useRef } from "react";
 import SocialSignIn from "../SocialSignIn/SocialSignIn";
 import { useAuthSignIn } from "@/hooks/useAuthSignIn";
 import { useAuthIntent } from "@/hooks/useAuthIntent";
+import { useRedirectIfAuthenticated } from "@/hooks/useRedirectIfAuthenticated";
 
 type FormValues = {
   email: string;
@@ -21,6 +22,9 @@ type FormValues = {
 };
 
 const SignIn = () => {
+  // Redirect if already authenticated
+  useRedirectIfAuthenticated();
+
   const { user } = useAuthSignIn();
   const shownError = useRef(false);
   const { markIntent } = useAuthIntent();
@@ -33,6 +37,7 @@ const SignIn = () => {
     shownError.current = false;
     const { email, password } = data;
     await signInWithEmailAndPassword(email, password);
+    // After successful sign-in, useAuthSignIn will handle redirect
   };
 
   useEffect(() => {
@@ -70,7 +75,11 @@ const SignIn = () => {
         style={{ margin: "30px 0" }}
       >
         <h1 style={{ margin: "15px 0" }}>Please Sign In !</h1>
-        <Form submitHandler={onSubmit} resolver={yupResolver(signInSchema)}>
+        <Form
+          submitHandler={onSubmit}
+          resolver={yupResolver(signInSchema)}
+          resetAfterSubmit={false}
+        >
           <div>
             <FormInput
               name="email"

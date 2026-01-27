@@ -1,9 +1,9 @@
 "use client";
 
 import { ReactNode } from "react";
-import { useEnsureDbUser } from "@/hooks/useEnsureDbUser";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function DbUserProvider({ children }: { children: ReactNode }) {
-  useEnsureDbUser();
+  useAuth();
   return <>{children}</>;
 }

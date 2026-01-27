@@ -1,17 +1,17 @@
 import { Modal } from "antd";
-import { ReactElement, ReactNode } from "react";
+import React, { ReactNode } from "react";
 
 interface IModal {
   isOpen: boolean;
   closeModal: () => void;
   title: string | ReactNode;
-  children: ReactElement;
+  children: ReactNode; // ✅ This accepts ANY React content
   handleOk?: () => void;
   showCancelButton?: boolean;
   showOkButton?: boolean;
 }
 
-const KModal = ({
+const KModal: React.FC<IModal> = ({
   isOpen,
   closeModal,
   title,
@@ -19,7 +19,7 @@ const KModal = ({
   handleOk,
   showCancelButton = true,
   showOkButton = true,
-}: IModal) => {
+}) => {
   return (
     <Modal
       title={title}
@@ -29,7 +29,9 @@ const KModal = ({
       cancelButtonProps={{
         style: { display: showCancelButton ? "inline" : "none" },
       }}
-      okButtonProps={{ style: { display: showOkButton ? "inline" : "none" } }}
+      okButtonProps={{
+        style: { display: showOkButton ? "inline" : "none" },
+      }}
     >
       {children}
     </Modal>

@@ -92,7 +92,7 @@ const RequestRolePage = () => {
   if (loading) return <Spin tip="Loading roles..." fullscreen />;
 
   if (error)
-    return <Alert type="error" message="Error" description={error} showIcon />;
+    return <Alert type="error" title="Error" description={error} showIcon />;
 
   return (
     <Space orientation="vertical" size="large" style={{ width: "100%" }}>
