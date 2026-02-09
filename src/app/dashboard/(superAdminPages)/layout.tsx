@@ -8,7 +8,7 @@ export default function SuperAdminPagesProtectedLayout({
   children: ReactNode;
 }) {
   return (
-    <ProtectedRoutes allowedRoles={[ROLE.SUPER_ADMIN]}>
+    <ProtectedRoutes requiredRoles={[ROLE.SUPER_ADMIN]}>
       {children}
     </ProtectedRoutes>
   );

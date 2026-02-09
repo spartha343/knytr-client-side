@@ -8,6 +8,8 @@ export default function CustomerPagesProtectedLayout({
   children: ReactNode;
 }) {
   return (
-    <ProtectedRoutes allowedRoles={[ROLE.CUSTOMER]}>{children}</ProtectedRoutes>
+    <ProtectedRoutes requiredRoles={[ROLE.CUSTOMER]}>
+      {children}
+    </ProtectedRoutes>
   );
 }

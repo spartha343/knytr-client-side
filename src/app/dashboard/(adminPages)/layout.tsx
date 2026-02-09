@@ -8,6 +8,6 @@ export default function AdminPagesProtectedLayout({
   children: ReactNode;
 }) {
   return (
-    <ProtectedRoutes allowedRoles={[ROLE.ADMIN]}>{children}</ProtectedRoutes>
+    <ProtectedRoutes requiredRoles={[ROLE.ADMIN]}>{children}</ProtectedRoutes>
   );
 }

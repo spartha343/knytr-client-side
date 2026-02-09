@@ -32,7 +32,7 @@ const KTable = ({
     ? {
         pageSize: pageSize,
         total: totalPages,
-        pageSizeOptions: [5, 10, 20],
+        pageSizeOptions: [5, 10, 20, 30, 50, 100],
         showSizeChanger: showSizeChanger,
         onChange: onPaginationChange,
       }
@@ -40,14 +40,12 @@ const KTable = ({
 
   return (
     <Table
-      locale={{
-        emptyText: "No data found",
-      }}
       loading={loading}
       columns={columns}
       dataSource={dataSource}
       pagination={paginationConfig}
       onChange={onTableChange}
+      scroll={{ x: true }}
       rowKey={rowKey}
     />
   );

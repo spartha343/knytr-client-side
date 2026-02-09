@@ -71,6 +71,16 @@ export const sidebarItems = (roles: RoleType[]): MenuProps["items"] => {
       key: "/dashboard/manage-role-requests",
       icon: <TableOutlined />,
     },
+    {
+      label: <Link href="/dashboard/all-stores">All Stores</Link>,
+      key: "/dashboard/all-stores",
+      icon: <TableOutlined />,
+    },
+    {
+      label: <Link href="/dashboard/all-branches">All Branches</Link>,
+      key: "/dashboard/all-branches",
+      icon: <TableOutlined />,
+    },
   ];
 
   // 5️⃣ Super Admin-only items
@@ -90,10 +100,10 @@ export const sidebarItems = (roles: RoleType[]): MenuProps["items"] => {
   // 🔹 Merge sidebar items based on roles
   let mergedItems: MenuProps["items"] = [...commonItems];
 
-  if (roles.includes(ROLE.CUSTOMER)) mergedItems.push(...customerItems);
-  if (roles.includes(ROLE.VENDOR)) mergedItems.push(...vendorItems);
-  if (roles.includes(ROLE.ADMIN)) mergedItems.push(...adminItems);
-  if (roles.includes(ROLE.SUPER_ADMIN)) mergedItems.push(...superAdminItems);
+  if (roles?.includes(ROLE.CUSTOMER)) mergedItems.push(...customerItems);
+  if (roles?.includes(ROLE.VENDOR)) mergedItems.push(...vendorItems);
+  if (roles?.includes(ROLE.ADMIN)) mergedItems.push(...adminItems);
+  if (roles?.includes(ROLE.SUPER_ADMIN)) mergedItems.push(...superAdminItems);
 
   // Optional: remove duplicates by key
   const keys = new Set<string>();

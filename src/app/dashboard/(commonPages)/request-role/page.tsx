@@ -171,7 +171,7 @@ const RequestRolePage = () => {
                   );
 
                   return (
-                    <Space direction="vertical" size={0}>
+                    <Space orientation="vertical" size={0}>
                       <Tag color="red">Rejected</Tag>
                       {daysLeft > 0 ? (
                         <Text type="secondary" style={{ fontSize: 12 }}>

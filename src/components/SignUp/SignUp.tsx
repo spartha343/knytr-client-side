@@ -12,7 +12,6 @@ import { useCreateUserWithEmailAndPassword } from "react-firebase-hooks/auth";
 import { auth } from "@/firebase/firebase.config";
 import { useEffect, useRef } from "react";
 import SocialSignIn from "../SocialSignIn/SocialSignIn";
-import { useAuthSignIn } from "@/hooks/useAuthSignIn";
 import { useAuthIntent } from "@/hooks/useAuthIntent";
 import { useRedirectIfAuthenticated } from "@/hooks/useRedirectIfAuthenticated";
 
@@ -24,8 +23,6 @@ type FormValues = {
 const SignUp = () => {
   // Redirect if already authenticated
   useRedirectIfAuthenticated();
-
-  const { user } = useAuthSignIn();
   const { markIntent } = useAuthIntent();
   const shownError = useRef(false);
 
@@ -109,7 +106,7 @@ const SignUp = () => {
             type="primary"
             htmlType="submit"
             loading={loading}
-            disabled={!!user?.uid}
+            disabled={loading}
             block
           >
             Sign Up

@@ -8,6 +8,6 @@ export default function VendorPagesProtectedLayout({
   children: ReactNode;
 }) {
   return (
-    <ProtectedRoutes allowedRoles={[ROLE.VENDOR]}>{children}</ProtectedRoutes>
+    <ProtectedRoutes requiredRoles={[ROLE.VENDOR]}>{children}</ProtectedRoutes>
   );
 }
