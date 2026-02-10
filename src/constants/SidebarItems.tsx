@@ -58,9 +58,9 @@ export const sidebarItems = (roles: RoleType[]): MenuProps["items"] => {
       icon: <AppstoreOutlined />,
     },
     {
-      label: <Link href="/dashboard/add-product">Add Product</Link>,
-      key: "/dashboard/add-product",
-      icon: <TableOutlined />,
+      label: <Link href="/dashboard/products">Products</Link>,
+      key: "/dashboard/products",
+      icon: <ShoppingCartOutlined />,
     },
   ];
 
@@ -82,6 +82,11 @@ export const sidebarItems = (roles: RoleType[]): MenuProps["items"] => {
       label: <Link href="/dashboard/brands">Brands</Link>,
       key: "/dashboard/brands",
       icon: <AppstoreAddOutlined />,
+    },
+    {
+      label: <Link href="/dashboard/attributes">Attributes</Link>,
+      key: "/dashboard/attributes",
+      icon: <TagsOutlined />,
     },
     {
       label: <Link href="/dashboard/all-stores">All Stores</Link>,

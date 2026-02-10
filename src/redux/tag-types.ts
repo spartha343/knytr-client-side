@@ -4,6 +4,10 @@ export enum tagTypes {
   branch = "branch",
   category = "category",
   brand = "brand",
+  attribute = "attribute",
+  product = "product",
+  productVariant = "productVariant",
+  inventory = "inventory",
 }
 
 export const tagTypesList = [
@@ -12,4 +16,8 @@ export const tagTypesList = [
   tagTypes.branch,
   tagTypes.category,
   tagTypes.brand,
+  tagTypes.attribute,
+  tagTypes.product,
+  tagTypes.productVariant,
+  tagTypes.inventory,
 ];
