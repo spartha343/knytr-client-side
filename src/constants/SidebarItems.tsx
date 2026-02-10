@@ -6,6 +6,7 @@ import {
   TableOutlined,
   UserAddOutlined,
   TagsOutlined,
+  AppstoreAddOutlined,
 } from "@ant-design/icons";
 import Link from "next/link";
 import { ROLE, RoleType } from "@/types/authTypes";
@@ -73,9 +74,14 @@ export const sidebarItems = (roles: RoleType[]): MenuProps["items"] => {
       icon: <TableOutlined />,
     },
     {
-      label: <Link href="/dashboard/categories">Categories</Link>, // ADD THIS
+      label: <Link href="/dashboard/categories">Categories</Link>,
       key: "/dashboard/categories",
       icon: <TagsOutlined />,
+    },
+    {
+      label: <Link href="/dashboard/brands">Brands</Link>,
+      key: "/dashboard/brands",
+      icon: <AppstoreAddOutlined />,
     },
     {
       label: <Link href="/dashboard/all-stores">All Stores</Link>,
