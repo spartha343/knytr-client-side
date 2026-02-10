@@ -9,16 +9,19 @@ import ActionBar from "@/components/ui/ActionBar";
 import { useGetAllStoresQuery } from "@/redux/api/storeApi";
 import { IStore } from "@/types/store";
 import Image from "next/image";
+import useDebounce from "@/hooks/useDebounce";
 
 const AdminStoresPage = () => {
   const [page, setPage] = useState(1);
   const [size, setSize] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
 
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
   const { data, isLoading } = useGetAllStoresQuery({
     page,
     limit: size,
-    searchTerm,
+    searchTerm: debouncedSearchTerm,
   });
 
   const stores = data?.stores as IStore[];

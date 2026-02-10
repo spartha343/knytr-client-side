@@ -5,12 +5,13 @@ import {
   AppstoreOutlined,
   TableOutlined,
   UserAddOutlined,
+  TagsOutlined,
 } from "@ant-design/icons";
 import Link from "next/link";
 import { ROLE, RoleType } from "@/types/authTypes";
 
 export const sidebarItems = (roles: RoleType[]): MenuProps["items"] => {
-  // 1️⃣ Items accessible by any logged-in user
+  // Items accessible by any logged-in user
   const commonItems: MenuProps["items"] = [
     {
       label: "Settings",
@@ -34,7 +35,7 @@ export const sidebarItems = (roles: RoleType[]): MenuProps["items"] => {
     },
   ];
 
-  // 2️⃣ Customer-only items
+  //  Customer-only items
   const customerItems: MenuProps["items"] = [
     {
       label: <Link href="/dashboard/cart">Cart</Link>,
@@ -48,7 +49,7 @@ export const sidebarItems = (roles: RoleType[]): MenuProps["items"] => {
     },
   ];
 
-  // 3️⃣ Vendor-only items
+  // Vendor-only items
   const vendorItems: MenuProps["items"] = [
     {
       label: <Link href="/dashboard/stores">Stores</Link>,
@@ -62,7 +63,7 @@ export const sidebarItems = (roles: RoleType[]): MenuProps["items"] => {
     },
   ];
 
-  // 4️⃣ Admin-only items
+  //  Admin-only items
   const adminItems: MenuProps["items"] = [
     {
       label: (
@@ -70,6 +71,11 @@ export const sidebarItems = (roles: RoleType[]): MenuProps["items"] => {
       ),
       key: "/dashboard/manage-role-requests",
       icon: <TableOutlined />,
+    },
+    {
+      label: <Link href="/dashboard/categories">Categories</Link>, // ADD THIS
+      key: "/dashboard/categories",
+      icon: <TagsOutlined />,
     },
     {
       label: <Link href="/dashboard/all-stores">All Stores</Link>,
@@ -83,7 +89,7 @@ export const sidebarItems = (roles: RoleType[]): MenuProps["items"] => {
     },
   ];
 
-  // 5️⃣ Super Admin-only items
+  // Super Admin-only items
   const superAdminItems: MenuProps["items"] = [
     {
       label: <Link href="/dashboard/manage-admins">Manage Admins</Link>,
@@ -97,7 +103,7 @@ export const sidebarItems = (roles: RoleType[]): MenuProps["items"] => {
     },
   ];
 
-  // 🔹 Merge sidebar items based on roles
+  //  Merge sidebar items based on roles
   let mergedItems: MenuProps["items"] = [...commonItems];
 
   if (roles?.includes(ROLE.CUSTOMER)) mergedItems.push(...customerItems);

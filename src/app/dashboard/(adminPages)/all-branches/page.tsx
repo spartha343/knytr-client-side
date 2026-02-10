@@ -8,16 +8,19 @@ import KTable from "@/components/ui/KTable";
 import ActionBar from "@/components/ui/ActionBar";
 import { useGetAllBranchesQuery } from "@/redux/api/branchApi";
 import { IBranch } from "@/types/branch";
+import useDebounce from "@/hooks/useDebounce";
 
 const AdminBranchesPage = () => {
   const [page, setPage] = useState(1);
   const [size, setSize] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
 
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
   const { data, isLoading } = useGetAllBranchesQuery({
     page,
     limit: size,
-    searchTerm,
+    searchTerm: debouncedSearchTerm,
   });
 
   const branches = data?.branches as IBranch[];
