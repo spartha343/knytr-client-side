@@ -26,10 +26,13 @@ import {
 } from "@ant-design/icons";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useAuth } from "@/hooks/useAuth";
+import { useGetCartQuery } from "@/redux/api/cartApi";
+import { useGuestCart } from "@/hooks/useGuestCart";
 import SignIn from "@/components/SignIn/SignIn";
 import SignUp from "@/components/SignUp/SignUp";
 import { signOut } from "firebase/auth";
 import { auth } from "@/firebase/firebase.config";
+import type { ICart } from "@/types/cart";
 
 const { Header: AntHeader } = Layout;
 const { Search } = Input;
@@ -37,20 +40,31 @@ const { Search } = Input;
 const Header = () => {
   const router = useRouter();
   const { language, toggleLanguage } = useLanguage();
-  const { dbUser } = useAuth();
+  const { dbUser, isAuthenticated } = useAuth();
 
   const [authDrawerOpen, setAuthDrawerOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
 
-  // Cart count (TODO: Get from cart context)
-  const cartCount = 0;
+  // Guest cart count using hook
+  const { itemCount: guestCartCount } = useGuestCart();
 
-  // Wishlist count (TODO: Get from wishlist context)
+  // Get DB cart count for authenticated users
+  const { data: dbCartResponse } = useGetCartQuery(undefined, {
+    skip: !isAuthenticated,
+  });
+  const dbCart = dbCartResponse as ICart | undefined;
+
+  // Calculate cart count
+  const cartCount = isAuthenticated
+    ? dbCart?.items?.reduce((total, item) => total + item.quantity, 0) || 0
+    : guestCartCount;
+
+  // Wishlist count (TODO: Implement wishlist)
   const wishlistCount = 0;
 
-  // Notifications count (TODO: Get from notifications)
+  // Notifications count (TODO: Implement notifications)
   const notificationsCount = 0;
 
   const handleSearch = (value: string) => {
@@ -228,7 +242,7 @@ const Header = () => {
             <Link href="/cart">
               <Badge count={cartCount} showZero={false}>
                 <ShoppingCartOutlined
-                  style={{ fontSize: "24px", color: "#333" }}
+                  style={{ fontSize: "24px", color: "#333", cursor: "pointer" }}
                 />
               </Badge>
             </Link>
@@ -236,14 +250,18 @@ const Header = () => {
             {/* Wishlist */}
             <Link href="/wishlist">
               <Badge count={wishlistCount} showZero={false}>
-                <HeartOutlined style={{ fontSize: "24px", color: "#333" }} />
+                <HeartOutlined
+                  style={{ fontSize: "24px", color: "#333", cursor: "pointer" }}
+                />
               </Badge>
             </Link>
 
             {/* Notifications (only if logged in) */}
             {dbUser && (
               <Badge count={notificationsCount} showZero={false}>
-                <BellOutlined style={{ fontSize: "24px", color: "#333" }} />
+                <BellOutlined
+                  style={{ fontSize: "24px", color: "#333", cursor: "pointer" }}
+                />
               </Badge>
             )}
 
@@ -278,7 +296,7 @@ const Header = () => {
         placement="right"
         onClose={() => setAuthDrawerOpen(false)}
         open={authDrawerOpen}
-        size={400}
+        width={400}
       >
         {authMode === "signin" ? (
           <SignIn onSuccess={() => setAuthDrawerOpen(false)} />
