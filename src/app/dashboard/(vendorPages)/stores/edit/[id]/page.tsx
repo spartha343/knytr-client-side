@@ -118,6 +118,40 @@ const EditStorePage = () => {
               />
             </Col>
 
+            {/* Contact Information Section */}
+            <Col xs={24}>
+              <div style={{ marginTop: "24px", marginBottom: "16px" }}>
+                <h3>Contact Information</h3>
+                <p style={{ color: "#666", fontSize: "14px" }}>
+                  Provide contact details for customers to reach your store
+                </p>
+              </div>
+            </Col>
+
+            <Col xs={24} md={8}>
+              <FormInput
+                name="whatsappNumber"
+                label="WhatsApp Number"
+                placeholder="+8801XXXXXXXXX or 01XXXXXXXXX"
+              />
+            </Col>
+
+            <Col xs={24} md={8}>
+              <FormInput
+                name="messengerLink"
+                label="Messenger Link"
+                placeholder="https://m.me/username"
+              />
+            </Col>
+
+            <Col xs={24} md={8}>
+              <FormInput
+                name="contactPhone"
+                label="Contact Phone"
+                placeholder="+8801XXXXXXXXX or 01XXXXXXXXX"
+              />
+            </Col>
+
             <Col xs={24} md={12}>
               <div>
                 <label style={{ display: "block", marginBottom: "8px" }}>

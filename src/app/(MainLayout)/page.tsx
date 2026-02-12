@@ -1,18 +1,19 @@
-"use client";
+import HeroSection from "@/components/home/HeroSection";
+import CategoryGrid from "@/components/home/CategoryGrid";
+import FeaturedProducts from "@/components/home/FeaturedProducts";
+import PopularStores from "@/components/home/PopularStores";
+import WhyChooseUs from "@/components/home/WhyChooseUs";
+import Newsletter from "@/components/home/Newsletter";
 
-// TODO: Remove the use client
-import Container from "@/components/shared/Container";
-import { auth } from "@/firebase/firebase.config";
-import { useAuthState } from "react-firebase-hooks/auth";
-
-export default function Home() {
-  const [user] = useAuthState(auth);
-
+export default function HomePage() {
   return (
-    <Container>
-      <h1 style={{ font: "50px" }}>Hello</h1>
-      <p>This is the home page</p>
-      <p>{user && user?.email}</p>
-    </Container>
+    <div>
+      <HeroSection />
+      <CategoryGrid />
+      <FeaturedProducts />
+      <PopularStores />
+      <WhyChooseUs />
+      <Newsletter />
+    </div>
   );
 }

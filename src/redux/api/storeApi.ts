@@ -19,7 +19,7 @@ export const storeApi = baseApi.injectEndpoints({
     // Get all stores (Admin)
     getAllStores: build.query({
       query: (arg: Record<string, string | number | boolean>) => ({
-        url: STORE_URL,
+        url: `${STORE_URL}/admin/all`,
         method: "GET",
         params: arg,
       }),

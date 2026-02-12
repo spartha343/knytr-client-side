@@ -1,4 +1,3 @@
-import Container from "@/components/shared/Container";
 import SignUp from "@/components/SignUp/SignUp";
 
 import { Metadata } from "next";
@@ -9,9 +8,9 @@ export const metadata: Metadata = {
 
 const SignUpPage = () => {
   return (
-    <Container>
+    <div>
       <SignUp />
-    </Container>
+    </div>
   );
 };
 

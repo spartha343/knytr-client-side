@@ -9,6 +9,8 @@ import ImageUpload from "@/components/Forms/ImageUpload";
 import { useCreateStoreMutation } from "@/redux/api/storeApi";
 import { useRouter } from "next/navigation";
 import { ICreateStoreInput } from "@/types/store";
+import { FieldValues, UseFormSetError } from "react-hook-form";
+import { extractFieldErrors, getErrorMessage } from "@/helpers/errorHelper";
 
 const CreateStorePage = () => {
   const router = useRouter();
@@ -16,6 +18,9 @@ const CreateStorePage = () => {
 
   const [logoUrl, setLogoUrl] = useState<string>("");
   const [bannerUrl, setBannerUrl] = useState<string>("");
+
+  const [formSetError, setFormSetError] =
+    useState<UseFormSetError<FieldValues> | null>(null);
 
   const onSubmit = async (data: ICreateStoreInput) => {
     try {
@@ -30,7 +35,23 @@ const CreateStorePage = () => {
       router.push("/dashboard/stores");
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      message.error(error?.data?.message || "Failed to create store");
+      const fieldErrors = extractFieldErrors(error);
+
+      // Set errors on specific fields
+      if (Object.keys(fieldErrors).length > 0 && formSetError) {
+        Object.entries(fieldErrors).forEach(([field, message]) => {
+          formSetError(field, {
+            type: "manual",
+            message: message,
+          });
+        });
+
+        // Also show a general error message
+        message.error("Please fix the validation errors");
+      } else {
+        // Fallback to generic error
+        message.error(getErrorMessage(error));
+      }
     }
   };
 
@@ -39,7 +60,10 @@ const CreateStorePage = () => {
       <h1>Create Store</h1>
 
       <Card>
-        <Form submitHandler={onSubmit}>
+        <Form
+          submitHandler={onSubmit}
+          onError={(setError) => setFormSetError(() => setError)}
+        >
           <Row gutter={[16, 16]}>
             <Col xs={24} md={12}>
               <FormInput
@@ -81,6 +105,40 @@ const CreateStorePage = () => {
                 name="seoKeywords"
                 label="SEO Keywords"
                 placeholder="keyword1, keyword2, keyword3"
+              />
+            </Col>
+
+            {/* Contact Information Section */}
+            <Col xs={24}>
+              <div style={{ marginTop: "24px", marginBottom: "16px" }}>
+                <h3>Contact Information</h3>
+                <p style={{ color: "#666", fontSize: "14px" }}>
+                  Provide contact details for customers to reach your store
+                </p>
+              </div>
+            </Col>
+
+            <Col xs={24} md={8}>
+              <FormInput
+                name="whatsappNumber"
+                label="WhatsApp Number"
+                placeholder="+8801XXXXXXXXX or 01XXXXXXXXX"
+              />
+            </Col>
+
+            <Col xs={24} md={8}>
+              <FormInput
+                name="messengerLink"
+                label="Messenger Link"
+                placeholder="https://m.me/username"
+              />
+            </Col>
+
+            <Col xs={24} md={8}>
+              <FormInput
+                name="contactPhone"
+                label="Contact Phone"
+                placeholder="+8801XXXXXXXXX or 01XXXXXXXXX"
               />
             </Col>
 

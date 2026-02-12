@@ -12,6 +12,9 @@ export interface IStore {
   seoTitle?: string;
   seoDescription?: string;
   seoKeywords?: string;
+  whatsappNumber?: string;
+  messengerLink?: string;
+  contactPhone?: string;
   createdAt: string;
   updatedAt: string;
   vendor?: {
@@ -28,6 +31,9 @@ export interface ICreateStoreInput {
   seoTitle?: string;
   seoDescription?: string;
   seoKeywords?: string;
+  whatsappNumber?: string;
+  messengerLink?: string;
+  contactPhone?: string;
 }
 
 export interface IUpdateStoreInput {
@@ -39,6 +45,9 @@ export interface IUpdateStoreInput {
   seoTitle?: string;
   seoDescription?: string;
   seoKeywords?: string;
+  whatsappNumber?: string;
+  messengerLink?: string;
+  contactPhone?: string;
 }
 
 export interface IStoreResponse {

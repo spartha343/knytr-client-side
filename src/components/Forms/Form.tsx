@@ -1,6 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ReactNode, useEffect } from "react";
-import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
+import {
+  FieldValues,
+  FormProvider,
+  SubmitHandler,
+  useForm,
+  UseFormSetError,
+} from "react-hook-form";
 
 type FormConfig = {
   defaultValues?: Record<string, any>;
@@ -10,7 +16,8 @@ type FormConfig = {
 type FormProps = {
   children: ReactNode;
   submitHandler: SubmitHandler<any>;
-  resetAfterSubmit?: boolean; // ✅ NEW: Optional reset flag
+  resetAfterSubmit?: boolean;
+  onError?: (setError: UseFormSetError<FieldValues>) => void;
 } & FormConfig;
 
 /**
@@ -26,6 +33,7 @@ const Form = ({
   children,
   submitHandler,
   defaultValues,
+  onError,
   resolver,
   resetAfterSubmit = false, // ✅ Default to NOT resetting
 }: FormProps) => {
@@ -38,7 +46,7 @@ const Form = ({
     formConfig["resolver"] = resolver;
   }
 
-  const methods = useForm<Record<string, any>>(formConfig);
+  const methods = useForm<FieldValues>(formConfig);
 
   const { handleSubmit, reset } = methods;
 
@@ -50,6 +58,12 @@ const Form = ({
       reset();
     }
   };
+
+  useEffect(() => {
+    if (onError) {
+      onError(methods.setError);
+    }
+  }, [onError, methods.setError]);
 
   // Update form when defaultValues change
   useEffect(() => {

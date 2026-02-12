@@ -1,7 +1,5 @@
 "use client";
 import { Button, Col, Divider, notification, Row } from "antd";
-import signInImg from "../../assets/sign-in-img.svg";
-import Image from "next/image";
 import Form from "../Forms/Form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { signInSchema } from "@/schemas/signIn";
@@ -14,17 +12,17 @@ import { useEffect, useRef } from "react";
 import SocialSignIn from "../SocialSignIn/SocialSignIn";
 import { useAuthSignIn } from "@/hooks/useAuthSignIn";
 import { useAuthIntent } from "@/hooks/useAuthIntent";
-import { useRedirectIfAuthenticated } from "@/hooks/useRedirectIfAuthenticated";
 
 type FormValues = {
   email: string;
   password: string;
 };
 
-const SignIn = () => {
-  // Redirect if already authenticated
-  useRedirectIfAuthenticated();
+interface SignInProps {
+  onSuccess?: () => void;
+}
 
+const SignIn = ({ onSuccess }: SignInProps = {}) => {
   const { user } = useAuthSignIn();
   const shownError = useRef(false);
   const { markIntent } = useAuthIntent();
@@ -36,8 +34,13 @@ const SignIn = () => {
     markIntent();
     shownError.current = false;
     const { email, password } = data;
-    await signInWithEmailAndPassword(email, password);
-    // After successful sign-in, useAuthSignIn will handle redirect
+    const result = await signInWithEmailAndPassword(email, password);
+
+    // Call onSuccess callback if provided (for drawer mode)
+    if (result?.user && onSuccess) {
+      setTimeout(() => onSuccess(), 500); // Small delay to ensure auth completes
+    }
+    // Otherwise, useAuthSignIn will handle redirect automatically
   };
 
   useEffect(() => {
@@ -60,20 +63,7 @@ const SignIn = () => {
         minHeight: "100vh",
       }}
     >
-      <Col xs={{ order: 2 }} md={{ order: 1, span: 12 }} lg={11}>
-        <Image
-          src={signInImg}
-          alt="Sign in image"
-          style={{ width: "100%", height: "auto" }}
-          loading="eager"
-        />
-      </Col>
-      <Col
-        xs={{ order: 1 }}
-        md={{ order: 2, span: 12 }}
-        lg={13}
-        style={{ margin: "30px 0" }}
-      >
+      <Col style={{ margin: "10px 0" }}>
         <h1 style={{ margin: "15px 0" }}>Please Sign In !</h1>
         <Form
           submitHandler={onSubmit}
