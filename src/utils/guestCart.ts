@@ -5,6 +5,9 @@ export interface GuestCartItem {
   priceSnapshot: number;
   productName: string;
   productSlug: string;
+  storeId: string;
+  storeName: string;
+  storeSlug: string;
   variantName?: string;
   imageUrl?: string;
   comparePrice?: number;

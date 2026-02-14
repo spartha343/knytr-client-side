@@ -1,7 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Card, Col, Row, message, Spin, Switch, Space } from "antd";
+import {
+  Button,
+  Card,
+  Col,
+  Row,
+  message,
+  Spin,
+  Switch,
+  Space,
+  Typography,
+  Form as AntForm,
+} from "antd";
 import Form from "@/components/Forms/Form";
 import FormInput from "@/components/Forms/FormInput";
 import FormTextArea from "@/components/Forms/FormTextArea";
@@ -14,11 +25,19 @@ import { useGetAllCategoriesQuery } from "@/redux/api/categoryApi";
 import { useGetAllBrandsQuery } from "@/redux/api/brandApi";
 import { useRouter, useParams } from "next/navigation";
 import { IUpdateProductInput, IProduct } from "@/types/product";
-import { ArrowLeftOutlined } from "@ant-design/icons";
+import {
+  ArrowLeftOutlined,
+  CheckOutlined,
+  CloseOutlined,
+  StarFilled,
+  StarOutlined,
+} from "@ant-design/icons";
+const { Text } = Typography;
 
 const EditProductPage = () => {
   const router = useRouter();
   const params = useParams();
+
   const id = params?.id as string;
 
   const { data: productData, isLoading: isFetching } = useGetProductByIdQuery(
@@ -33,13 +52,15 @@ const EditProductPage = () => {
   const { data: brandsData } = useGetAllBrandsQuery({ limit: 100 });
 
   const product = productData as IProduct;
-
-  const [isActive, setIsActive] = useState<boolean>(product?.isActive ?? true);
+  // Initialize with product data or defaults
+  const [isActive, setIsActive] = useState<boolean>(
+    () => product?.isActive ?? true,
+  );
   const [isPublished, setIsPublished] = useState<boolean>(
-    product?.isPublished ?? false,
+    () => product?.isPublished ?? false,
   );
   const [isFeatured, setIsFeatured] = useState<boolean>(
-    product?.isFeatured ?? false,
+    () => product?.isFeatured ?? false,
   );
 
   const onSubmit = async (data: IUpdateProductInput) => {
@@ -258,6 +279,65 @@ const EditProductPage = () => {
                 label="SEO Keywords"
                 placeholder="keyword1, keyword2, keyword3"
               />
+            </Col>
+          </Row>
+        </Card>
+
+        {/* Publishing Settings */}
+        <Card title="⚙️ Publishing Settings" style={{ marginBottom: 16 }}>
+          <Row gutter={[24, 24]}>
+            <Col xs={24} md={8}>
+              <AntForm.Item label="Publish Status">
+                <Space orientation="vertical">
+                  <Switch
+                    checked={isPublished}
+                    onChange={setIsPublished}
+                    checkedChildren={<CheckOutlined />}
+                    unCheckedChildren={<CloseOutlined />}
+                  />
+                  <Text type="secondary">
+                    {isPublished
+                      ? "Product is visible to customers"
+                      : "Product is saved as draft"}
+                  </Text>
+                </Space>
+              </AntForm.Item>
+            </Col>
+
+            <Col xs={24} md={8}>
+              <AntForm.Item label="Active Status">
+                <Space orientation="vertical">
+                  <Switch
+                    checked={isActive}
+                    onChange={setIsActive}
+                    checkedChildren={<CheckOutlined />}
+                    unCheckedChildren={<CloseOutlined />}
+                  />
+                  <Text type="secondary">
+                    {isActive
+                      ? "Product is available for purchase"
+                      : "Product is temporarily disabled"}
+                  </Text>
+                </Space>
+              </AntForm.Item>
+            </Col>
+
+            <Col xs={24} md={8}>
+              <AntForm.Item label="Featured Status">
+                <Space orientation="vertical">
+                  <Switch
+                    checked={isFeatured}
+                    onChange={setIsFeatured}
+                    checkedChildren={<StarFilled />}
+                    unCheckedChildren={<StarOutlined />}
+                  />
+                  <Text type="secondary">
+                    {isFeatured
+                      ? "Product is highlighted as featured"
+                      : "Product is not featured"}
+                  </Text>
+                </Space>
+              </AntForm.Item>
             </Col>
           </Row>
         </Card>

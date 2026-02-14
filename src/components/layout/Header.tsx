@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -41,6 +41,13 @@ const Header = () => {
   const router = useRouter();
   const { language, toggleLanguage } = useLanguage();
   const { dbUser, isAuthenticated } = useAuth();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    // Intentional: Prevent hydration mismatch with auth state
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsMounted(true);
+  }, []);
 
   const [authDrawerOpen, setAuthDrawerOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
@@ -224,58 +231,74 @@ const Header = () => {
             />
           </div>
 
-          {/* Right: Icons */}
+          {/* Right Side */}
           <Space size="middle">
-            {/* Search icon (Mobile only) */}
-            <Button
-              type="text"
-              icon={<SearchOutlined style={{ fontSize: "20px" }} />}
-              className="mobile-only"
-              style={{ display: "none" }}
-              onClick={() => {
-                // TODO: Open search modal on mobile
-                console.log("Open mobile search");
-              }}
-            />
-
-            {/* Cart */}
-            <Link href="/cart">
-              <Badge count={cartCount} showZero={false}>
-                <ShoppingCartOutlined
-                  style={{ fontSize: "24px", color: "#333", cursor: "pointer" }}
-                />
-              </Badge>
+            <Link href="/products">
+              <Button type="text">Products</Button>
             </Link>
 
-            {/* Wishlist */}
-            <Link href="/wishlist">
-              <Badge count={wishlistCount} showZero={false}>
-                <HeartOutlined
-                  style={{ fontSize: "24px", color: "#333", cursor: "pointer" }}
-                />
-              </Badge>
-            </Link>
+            {/* Only render client-side content after mounting to prevent hydration mismatch */}
+            {isMounted ? (
+              <>
+                <Link href="/cart">
+                  <Badge count={cartCount} showZero={false}>
+                    <ShoppingCartOutlined
+                      style={{
+                        fontSize: "24px",
+                        color: "#333",
+                        cursor: "pointer",
+                      }}
+                    />
+                  </Badge>
+                </Link>
+                <Link href="/wishlist">
+                  <Badge count={wishlistCount} showZero={false}>
+                    <HeartOutlined
+                      style={{
+                        fontSize: "24px",
+                        color: "#333",
+                        cursor: "pointer",
+                      }}
+                    />
+                  </Badge>
+                </Link>
+                <Badge count={notificationsCount} showZero={false}>
+                  <BellOutlined
+                    style={{
+                      fontSize: "24px",
+                      color: "#333",
+                      cursor: "pointer",
+                    }}
+                  />
+                </Badge>
 
-            {/* Notifications (only if logged in) */}
-            {dbUser && (
-              <Badge count={notificationsCount} showZero={false}>
-                <BellOutlined
-                  style={{ fontSize: "24px", color: "#333", cursor: "pointer" }}
-                />
-              </Badge>
+                {isAuthenticated && dbUser ? (
+                  // ... dropdown menu code (keep as is)
+                  <Dropdown
+                    menu={{
+                      items: userMenuItems,
+                    }}
+                    trigger={["click"]}
+                    placement="bottomRight"
+                  >
+                    <Avatar
+                      style={{
+                        cursor: "pointer",
+                        backgroundColor: "#1890ff",
+                      }}
+                      icon={<UserOutlined />}
+                    />
+                  </Dropdown>
+                ) : (
+                  <Link href="/sign-in">
+                    <Button type="primary">Sign In</Button>
+                  </Link>
+                )}
+              </>
+            ) : (
+              // Placeholder during SSR - just show loading state
+              <div style={{ width: "200px", height: "32px" }} />
             )}
-
-            {/* User Profile */}
-            <Dropdown
-              menu={{ items: userMenuItems }}
-              placement="bottomRight"
-              trigger={["click"]}
-            >
-              <Avatar
-                icon={<UserOutlined />}
-                style={{ cursor: "pointer", backgroundColor: "#1890ff" }}
-              />
-            </Dropdown>
           </Space>
         </div>
       </AntHeader>
@@ -296,7 +319,7 @@ const Header = () => {
         placement="right"
         onClose={() => setAuthDrawerOpen(false)}
         open={authDrawerOpen}
-        width={400}
+        size={400}
       >
         {authMode === "signin" ? (
           <SignIn onSuccess={() => setAuthDrawerOpen(false)} />

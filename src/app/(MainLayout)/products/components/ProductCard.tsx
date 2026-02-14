@@ -75,6 +75,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    router.push("/cart");
 
     // If already in cart, navigate to cart page
     if (isInCart) {
@@ -98,6 +99,9 @@ const ProductCard = ({ product }: ProductCardProps) => {
           priceSnapshot: Number(product.basePrice),
           productName: product.name,
           productSlug: product.slug,
+          storeId: product.store?.id || product.storeId,
+          storeName: product.store?.name || "Unknown Store",
+          storeSlug: product.store?.slug || "unknown",
           imageUrl: imageUrl || undefined,
           comparePrice: product.comparePrice
             ? Number(product.comparePrice)
@@ -124,7 +128,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
         body: { padding: "12px" },
       }}
       cover={
-        <Link href={`/products/${product.slug}`}>
+        <Link href={`/products/${product.store?.slug}/${product.slug}`}>
           <div
             style={{
               height: "180px",

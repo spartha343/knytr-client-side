@@ -12,7 +12,7 @@ export const publicProductApi = publicApi.injectEndpoints({
       query: (arg = {}) => ({
         url: "/products",
         method: "GET",
-        params: arg,
+        params: { ...arg, isPublished: true, isActive: true },
       }),
       transformResponse: (response: IApiResponse<IProduct[]>) => ({
         products: response.data,
@@ -24,6 +24,18 @@ export const publicProductApi = publicApi.injectEndpoints({
     getPublicProductById: build.query<IProduct, string>({
       query: (id) => ({
         url: `/products/${id}`,
+        method: "GET",
+      }),
+      transformResponse: (response: IApiResponse<IProduct>) => response.data,
+      providesTags: [tagTypes.product],
+    }),
+
+    getPublicProductByStoreAndSlug: build.query<
+      IProduct,
+      { storeSlug: string; productSlug: string }
+    >({
+      query: ({ storeSlug, productSlug }) => ({
+        url: `/products/store/${storeSlug}/product/${productSlug}`,
         method: "GET",
       }),
       transformResponse: (response: IApiResponse<IProduct>) => response.data,
@@ -44,5 +56,6 @@ export const publicProductApi = publicApi.injectEndpoints({
 export const {
   useGetPublicProductsQuery,
   useGetPublicProductByIdQuery,
+  useGetPublicProductByStoreAndSlugQuery,
   useGetSimilarProductsQuery,
 } = publicProductApi;

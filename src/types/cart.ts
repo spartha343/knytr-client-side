@@ -11,6 +11,7 @@ export interface ICartItem {
     id: string;
     name: string;
     slug: string;
+    storeId: string;
     basePrice: number;
     comparePrice: number | null;
     isDeleted: boolean;

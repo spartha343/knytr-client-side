@@ -9,6 +9,7 @@ export enum tagTypes {
   productVariant = "productVariant",
   inventory = "inventory",
   cart = "cart",
+  order = "order",
 }
 
 export const tagTypesList = [
@@ -22,4 +23,5 @@ export const tagTypesList = [
   tagTypes.productVariant,
   tagTypes.inventory,
   tagTypes.cart,
+  tagTypes.order,
 ];

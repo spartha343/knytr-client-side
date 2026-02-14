@@ -5,23 +5,9 @@ import { ShoppingCartOutlined, HeartOutlined } from "@ant-design/icons";
 import Link from "next/link";
 import Image from "next/image";
 import { useGetPublicProductsQuery } from "@/redux/api/publicProductApi";
+import { IProduct } from "@/types/product";
 
 const { Title, Text } = Typography;
-
-interface ProductMedia {
-  id: string;
-  url: string;
-  isPrimary: boolean;
-}
-
-interface Product {
-  id: string;
-  name: string;
-  slug: string;
-  basePrice: string;
-  comparePrice?: string;
-  media?: ProductMedia[];
-}
 
 const FeaturedProducts = () => {
   const { data, isLoading } = useGetPublicProductsQuery({ limit: 8 });
@@ -34,17 +20,17 @@ const FeaturedProducts = () => {
     );
   }
 
-  const products = (data?.products as Product[]) || [];
+  const products = (data?.products as IProduct[]) || [];
 
   if (products.length === 0) {
     return null;
   }
 
   // Find primary image or first image
-  const getProductImage = (product: Product) => {
+  const getProductImage = (product: IProduct) => {
     if (!product.media || product.media.length === 0) return null;
     const primaryImage = product.media.find((m) => m.isPrimary);
-    return primaryImage?.url || product.media[0]?.url;
+    return primaryImage?.mediaUrl || product.media[0]?.mediaUrl;
   };
 
   return (
@@ -66,9 +52,8 @@ const FeaturedProducts = () => {
           const discount =
             product.comparePrice && product.comparePrice > product.basePrice
               ? Math.round(
-                  ((parseFloat(product.comparePrice) -
-                    parseFloat(product.basePrice)) /
-                    parseFloat(product.comparePrice)) *
+                  ((product.comparePrice - product.basePrice) /
+                    product.comparePrice) *
                     100,
                 )
               : 0;
@@ -78,7 +63,9 @@ const FeaturedProducts = () => {
               <Card
                 hoverable
                 cover={
-                  <Link href={`/products/${product.slug}`}>
+                  <Link
+                    href={`/products/${product.store?.slug}/${product.slug}`}
+                  >
                     <div
                       style={{
                         height: "200px",
@@ -133,7 +120,7 @@ const FeaturedProducts = () => {
                   </Button>,
                 ]}
               >
-                <Link href={`/products/${product.slug}`}>
+                <Link href={`/products/${product.store?.slug}/${product.slug}`}>
                   <Card.Meta
                     title={
                       <div style={{ height: "40px", overflow: "hidden" }}>
@@ -146,7 +133,7 @@ const FeaturedProducts = () => {
                           strong
                           style={{ fontSize: "18px", color: "#1890ff" }}
                         >
-                          ৳{product.basePrice.toLocaleString()}
+                          ৳{Number(product.basePrice).toLocaleString()}
                         </Text>
                         {product.comparePrice &&
                           product.comparePrice > product.basePrice && (
@@ -156,7 +143,7 @@ const FeaturedProducts = () => {
                                 delete
                                 style={{ color: "#999", fontSize: "14px" }}
                               >
-                                ৳{product.comparePrice.toLocaleString()}
+                                ৳{Number(product.comparePrice).toLocaleString()}
                               </Text>
                               <Text
                                 style={{

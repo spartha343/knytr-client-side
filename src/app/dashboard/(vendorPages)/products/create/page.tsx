@@ -1,7 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Card, Col, Row, message, Steps } from "antd";
+import {
+  Button,
+  Card,
+  Col,
+  Row,
+  message,
+  Steps,
+  Divider,
+  Space,
+  Switch,
+  Typography,
+  Form as AntForm,
+} from "antd";
 import Form from "@/components/Forms/Form";
 import FormInput from "@/components/Forms/FormInput";
 import FormTextArea from "@/components/Forms/FormTextArea";
@@ -14,10 +26,22 @@ import { useGetAllAttributesQuery } from "@/redux/api/attributeApi";
 import { useRouter } from "next/navigation";
 import { ICreateProductInput } from "@/types/product";
 import { Checkbox } from "antd";
+import {
+  CheckOutlined,
+  CloseOutlined,
+  StarFilled,
+  StarOutlined,
+} from "@ant-design/icons";
+
+const { Text } = Typography;
 
 const CreateProductPage = () => {
   const router = useRouter();
   const [createProduct, { isLoading }] = useCreateProductMutation();
+
+  const [isPublished, setIsPublished] = useState(false); // Default: Draft
+  const [isActive, setIsActive] = useState(true); // Default: Active
+  const [isFeatured, setIsFeatured] = useState(false); // Default: Not featured
 
   const { data: categoriesData } = useGetAllCategoriesQuery({ limit: 100 });
   const { data: brandsData } = useGetAllBrandsQuery({ limit: 100 });
@@ -41,6 +65,9 @@ const CreateProductPage = () => {
         height: data.height ? Number(data.height) : undefined,
         attributeIds:
           selectedAttributes.length > 0 ? selectedAttributes : undefined,
+        isPublished,
+        isActive,
+        isFeatured,
       };
 
       const res = await createProduct(payload).unwrap();
@@ -273,6 +300,57 @@ const CreateProductPage = () => {
             </Col>
           </Row>
         </Card>
+
+        {/* Publishing Status Section */}
+        <Divider orientation="horizontal">Publishing Settings</Divider>
+
+        <AntForm.Item label="Publish Status">
+          <Space orientation="vertical">
+            <Switch
+              checked={isPublished}
+              onChange={setIsPublished}
+              checkedChildren={<CheckOutlined />}
+              unCheckedChildren={<CloseOutlined />}
+            />
+            <Text type="secondary">
+              {isPublished
+                ? "Product will be visible to customers"
+                : "Product will be saved as draft"}
+            </Text>
+          </Space>
+        </AntForm.Item>
+
+        <AntForm.Item label="Product Status">
+          <Space orientation="vertical">
+            <Switch
+              checked={isActive}
+              onChange={setIsActive}
+              checkedChildren={<CheckOutlined />}
+              unCheckedChildren={<CloseOutlined />}
+            />
+            <Text type="secondary">
+              {isActive
+                ? "Product is available for purchase"
+                : "Product is temporarily unavailable"}
+            </Text>
+          </Space>
+        </AntForm.Item>
+
+        <AntForm.Item label="Featured Product">
+          <Space orientation="vertical">
+            <Switch
+              checked={isFeatured}
+              onChange={setIsFeatured}
+              checkedChildren={<StarFilled />}
+              unCheckedChildren={<StarOutlined />}
+            />
+            <Text type="secondary">
+              {isFeatured
+                ? "Product will appear in featured sections"
+                : "Regular product"}
+            </Text>
+          </Space>
+        </AntForm.Item>
 
         <Card>
           <Row gutter={[16, 16]}>
