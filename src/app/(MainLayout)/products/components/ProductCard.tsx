@@ -164,7 +164,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
         </Link>
       }
     >
-      <Link href={`/products/${product.slug}`}>
+      <Link href={`/products/${product.store?.slug}/${product.slug}`}>
         <Card.Meta
           title={
             <div

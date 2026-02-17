@@ -65,25 +65,30 @@ export interface IOrder {
   customerPhone: string;
   customerName?: string | null;
   customerEmail?: string | null;
-  policeStation?: string | null;
-  deliveryDistrict?: string | null;
-  deliveryArea?: string | null;
+  secondaryPhone?: string | null;
   deliveryAddress?: string | null;
   deliveryLocation: DeliveryLocation;
   deliveryCharge: number;
+  specialInstructions?: string | null;
+  recipientCityId?: number | null;
+  recipientZoneId?: number | null;
+  recipientAreaId?: number | null;
   userId?: string | null;
   storeId: string;
+  assignedBranchId?: string | null;
+  pathaoDelivery?: {
+    id: string;
+    consignmentId?: string | null;
+    invoiceId?: string | null;
+    status: string;
+    deliveryFee?: number | null;
+    createdAt: string;
+  } | null;
   status: OrderStatus;
   paymentMethod: PaymentMethod;
   subtotal: number;
   totalDiscount: number;
   totalAmount: number;
-  isVoiceConfirmed: boolean;
-  voiceConfirmedAt?: string | null;
-  voiceConfirmedBy?: string | null;
-  isEditedByVendor: boolean;
-  editedAt?: string | null;
-  editNotes?: string | null;
   createdAt: string;
   updatedAt: string;
   user?: {
@@ -112,11 +117,13 @@ export interface ICreateOrderInput {
   customerPhone: string;
   customerName?: string;
   customerEmail?: string;
-  policeStation?: string;
-  deliveryDistrict?: string;
-  deliveryArea?: string;
+  secondaryPhone?: string;
   deliveryAddress?: string;
   deliveryLocation: DeliveryLocation;
+  specialInstructions?: string;
+  recipientCityId?: number;
+  recipientZoneId?: number;
+  recipientAreaId?: number;
   storeId: string;
   paymentMethod?: PaymentMethod;
   items: ICreateOrderItem[];
@@ -126,17 +133,25 @@ export interface IUpdateOrderInput {
   customerPhone?: string;
   customerName?: string;
   customerEmail?: string;
-  policeStation?: string;
-  deliveryDistrict?: string;
-  deliveryArea?: string;
+  secondaryPhone?: string;
   deliveryAddress?: string;
   deliveryLocation?: DeliveryLocation;
+  specialInstructions?: string;
+  recipientCityId?: number;
+  recipientZoneId?: number;
+  recipientAreaId?: number;
+  items?: Array<{
+    productId: string;
+    variantId?: string;
+    quantity: number;
+    priceOverride?: number;
+  }>;
+  deliveryChargeOverride?: number;
   editNotes?: string;
 }
 
 export interface IUpdateOrderStatusInput {
   status: OrderStatus;
-  editNotes?: string;
 }
 
 export interface IAssignBranchInput {

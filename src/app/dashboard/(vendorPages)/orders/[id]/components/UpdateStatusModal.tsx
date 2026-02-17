@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Modal, Select, Form, Input, Button, Space, Tag, message } from "antd";
+import { Modal, Select, Form, Button, Space, Tag, message } from "antd";
 import { useUpdateOrderStatusMutation } from "@/redux/api/orderApi";
 import { OrderStatus } from "@/types/order";
 
@@ -15,19 +15,18 @@ interface UpdateStatusModalProps {
 // Status color mapping
 const getStatusColor = (status: OrderStatus) => {
   const colors: Record<OrderStatus, string> = {
-    PLACED: "blue",
-    VOICE_CONFIRMED: "cyan",
-    VENDOR_CONFIRMED: "purple",
+    PENDING: "blue",
+    CONFIRMED: "purple",
     PROCESSING: "orange",
-    READY_TO_SHIP: "gold",
+    READY_FOR_PICKUP: "gold",
     SHIPPED: "geekblue",
+    OUT_FOR_DELIVERY: "cyan",
     DELIVERED: "green",
     CANCELLED: "red",
     RETURNED: "volcano",
   };
   return colors[status] || "default";
 };
-
 const UpdateStatusModal = ({
   isOpen,
   currentStatus,
@@ -35,7 +34,6 @@ const UpdateStatusModal = ({
   onClose,
 }: UpdateStatusModalProps) => {
   const [newStatus, setNewStatus] = useState<OrderStatus | null>(null);
-  const [statusNotes, setStatusNotes] = useState("");
 
   const [updateOrderStatus, { isLoading: isUpdating }] =
     useUpdateOrderStatusMutation();
@@ -52,7 +50,6 @@ const UpdateStatusModal = ({
         id: orderId,
         data: {
           status: newStatus,
-          editNotes: statusNotes || undefined,
         },
       }).unwrap();
 
@@ -67,7 +64,6 @@ const UpdateStatusModal = ({
   // Handle modal close
   const handleClose = () => {
     setNewStatus(null);
-    setStatusNotes("");
     onClose();
   };
 
@@ -101,29 +97,20 @@ const UpdateStatusModal = ({
             onChange={(value) => setNewStatus(value)}
             size="large"
           >
-            <Select.Option value="PLACED">Placed</Select.Option>
-            <Select.Option value="VOICE_CONFIRMED">
-              Voice Confirmed
-            </Select.Option>
-            <Select.Option value="VENDOR_CONFIRMED">
-              Vendor Confirmed
-            </Select.Option>
+            <Select.Option value="PENDING">Pending</Select.Option>
+            <Select.Option value="CONFIRMED">Confirmed</Select.Option>
             <Select.Option value="PROCESSING">Processing</Select.Option>
-            <Select.Option value="READY_TO_SHIP">Ready to Ship</Select.Option>
+            <Select.Option value="READY_FOR_PICKUP">
+              Ready for Pickup
+            </Select.Option>
             <Select.Option value="SHIPPED">Shipped</Select.Option>
+            <Select.Option value="OUT_FOR_DELIVERY">
+              Out for Delivery
+            </Select.Option>
             <Select.Option value="DELIVERED">Delivered</Select.Option>
             <Select.Option value="CANCELLED">Cancelled</Select.Option>
             <Select.Option value="RETURNED">Returned</Select.Option>
           </Select>
-        </Form.Item>
-
-        <Form.Item label="Notes (Optional)">
-          <Input.TextArea
-            rows={3}
-            placeholder="Add any notes about this status change..."
-            value={statusNotes}
-            onChange={(e) => setStatusNotes(e.target.value)}
-          />
         </Form.Item>
 
         <Form.Item style={{ marginBottom: 0 }}>

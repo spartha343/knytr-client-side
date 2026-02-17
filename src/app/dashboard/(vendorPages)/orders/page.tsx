@@ -19,12 +19,12 @@ import useDebounce from "@/hooks/useDebounce";
 // Status color mapping (same as customer orders)
 const getStatusColor = (status: OrderStatus) => {
   const colors: Record<OrderStatus, string> = {
-    PLACED: "blue",
-    VOICE_CONFIRMED: "cyan",
-    VENDOR_CONFIRMED: "purple",
+    PENDING: "blue",
+    CONFIRMED: "purple",
     PROCESSING: "orange",
-    READY_TO_SHIP: "gold",
+    READY_FOR_PICKUP: "gold",
     SHIPPED: "geekblue",
+    OUT_FOR_DELIVERY: "cyan",
     DELIVERED: "green",
     CANCELLED: "red",
     RETURNED: "volcano",
@@ -144,7 +144,7 @@ const VendorOrdersPage = () => {
       title: "Status",
       dataIndex: "status",
       key: "status",
-      render: (status: OrderStatus, record: IOrder) => (
+      render: (status: OrderStatus) => (
         <Space orientation="vertical" size="small">
           <Tag
             color={getStatusColor(status)}
@@ -152,11 +152,6 @@ const VendorOrdersPage = () => {
           >
             {formatStatus(status)}
           </Tag>
-          {record.isVoiceConfirmed && (
-            <div style={{ fontSize: "10px", color: "#52c41a" }}>
-              ✓ Voice Confirmed
-            </div>
-          )}
         </Space>
       ),
     },

@@ -136,6 +136,15 @@ export const orderApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: [tagTypes.order],
     }),
+    createManualOrder: build.mutation({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      query: (data: any) => ({
+        url: `${ORDER_URL}/manual`,
+        method: "POST",
+        data,
+      }),
+      invalidatesTags: [tagTypes.order],
+    }),
   }),
 });
 
@@ -149,5 +158,6 @@ export const {
   useGetOrderByIdQuery,
   useUpdateOrderMutation,
   useUpdateOrderStatusMutation,
+  useCreateManualOrderMutation,
   useAssignBranchToItemMutation,
 } = orderApi;

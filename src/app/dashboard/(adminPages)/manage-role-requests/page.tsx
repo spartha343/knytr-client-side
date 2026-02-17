@@ -9,8 +9,8 @@ import {
   useGetRoleRequestsQuery,
   useUpdateRoleRequestMutation,
 } from "@/redux/api/roleRequestsApi";
-import { useDebounced } from "@/redux/hooks";
 import type { ColumnsType } from "antd/es/table";
+import useDebounce from "@/hooks/useDebounce";
 
 const { Option } = Select;
 
@@ -33,7 +33,7 @@ const ManageRoleRequests = () => {
   const [selected, setSelected] = useState<RoleRequest | null>(null);
 
   // Debounce search to avoid excessive API calls
-  const debouncedSearch = useDebounced({
+  const debouncedSearch = useDebounce({
     searchQuery: search,
     delay: 500,
   });
@@ -45,7 +45,7 @@ const ManageRoleRequests = () => {
   const { data, isLoading, error, refetch } = useGetRoleRequestsQuery({
     page,
     limit,
-    searchTerm: debouncedSearch,
+    searchTerm: debouncedSearch.searchQuery,
     status,
     sortBy,
     sortOrder,

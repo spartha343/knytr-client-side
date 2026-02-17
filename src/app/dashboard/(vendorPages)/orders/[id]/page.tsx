@@ -12,10 +12,15 @@ import DeliveryInfoCard from "./components/DeliveryInfoCard";
 import OrderItemsTable from "./components/OrderItemsTable";
 import PaymentSummaryCard from "./components/PaymentSummaryCard";
 import UpdateStatusModal from "./components/UpdateStatusModal";
+import BookPathaoDeliveryModal from "./components/BookPathaoDeliveryModal";
+import PathaoDeliveryCard from "./components/PathaoDeliveryCard";
+import EditOrderModal from "./components/EditOrderModal";
 
 const VendorOrderDetailPage = () => {
   const params = useParams();
   const router = useRouter();
+  const [isPathaoModalOpen, setIsPathaoModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const orderId = params.id as string;
 
   // State for status update modal
@@ -53,13 +58,14 @@ const VendorOrderDetailPage = () => {
 
   return (
     <div>
-      {/* Header with order number, status, and action buttons */}
       <OrderHeader
+        orderId={orderId}
         orderNumber={order.orderNumber}
         status={order.status}
         createdAt={order.createdAt}
-        isVoiceConfirmed={order.isVoiceConfirmed}
         onUpdateStatus={() => setIsModalOpen(true)}
+        onEditOrder={() => setIsEditModalOpen(true)}
+        onBookPathaoDelivery={() => setIsPathaoModalOpen(true)}
         onBack={() => router.back()}
       />
 
@@ -70,6 +76,7 @@ const VendorOrderDetailPage = () => {
           customerName={order.customerName || order.customerPhone}
           customerPhone={order.customerPhone}
           customerEmail={order.customerEmail}
+          secondaryPhone={order.secondaryPhone}
         />
 
         {/* Store Information */}
@@ -80,15 +87,17 @@ const VendorOrderDetailPage = () => {
         {/* Delivery/Pickup Information */}
         <DeliveryInfoCard
           deliveryType={order.deliveryLocation}
-          deliveryDistrict={order.deliveryDistrict}
-          policeStation={order.policeStation}
-          deliveryArea={order.deliveryArea}
           deliveryAddress={order.deliveryAddress}
-          deliveryInstructions={null}
+          deliveryInstructions={order.specialInstructions}
           storeName={order.store?.name}
           branchName={null}
           branchCity={null}
         />
+
+        {/* Pathao Delivery Information (if exists) */}
+        {order.pathaoDelivery && (
+          <PathaoDeliveryCard delivery={order.pathaoDelivery} />
+        )}
 
         {/* Order Items Table */}
         <OrderItemsTable
@@ -104,7 +113,6 @@ const VendorOrderDetailPage = () => {
           deliveryCharge={order.deliveryCharge}
           totalAmount={order.totalAmount}
           paymentMethod={order.paymentMethod}
-          editNotes={order.editNotes}
         />
       </Space>
 
@@ -114,6 +122,31 @@ const VendorOrderDetailPage = () => {
         currentStatus={order.status}
         orderId={order.id}
         onClose={() => setIsModalOpen(false)}
+      />
+
+      <BookPathaoDeliveryModal
+        isOpen={isPathaoModalOpen}
+        orderId={order.id}
+        orderNumber={order.orderNumber}
+        currentCityId={order.recipientCityId}
+        currentZoneId={order.recipientZoneId}
+        currentAreaId={order.recipientAreaId}
+        onClose={() => setIsPathaoModalOpen(false)}
+        onSuccess={() => {
+          // Refresh order data after successful booking
+          window.location.reload();
+        }}
+      />
+
+      {/* Edit Order Modal */}
+      <EditOrderModal
+        isOpen={isEditModalOpen}
+        order={order}
+        onClose={() => setIsEditModalOpen(false)}
+        onSuccess={() => {
+          // Refresh order data after successful update
+          window.location.reload();
+        }}
       />
     </div>
   );

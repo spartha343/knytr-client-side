@@ -32,6 +32,8 @@ import type { ICart, ICartItem } from "@/types/cart";
 import { GuestCartManager, type GuestCartItem } from "@/utils/guestCart";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import PathaoLocationSelector from "@/components/pathao/PathaoLocationSelector";
+import FormTextArea from "@/components/Forms/FormTextArea";
 
 const { Title, Text } = Typography;
 
@@ -39,10 +41,12 @@ const checkoutSchema = z.object({
   customerPhone: z.string().min(11, "Phone number must be at least 11 digits"),
   customerName: z.string().optional(),
   customerEmail: z.email("Invalid email").optional().or(z.literal("")),
-  policeStation: z.string().optional(),
-  deliveryDistrict: z.string().optional(),
-  deliveryArea: z.string().optional(),
+  secondaryPhone: z.string().optional(),
   deliveryAddress: z.string().optional(),
+  specialInstructions: z.string().optional(),
+  recipientCityId: z.number().optional(),
+  recipientZoneId: z.number().optional(),
+  recipientAreaId: z.number().optional(),
 });
 
 interface StoreGroup {
@@ -55,7 +59,9 @@ const CheckoutPage = () => {
   const router = useRouter();
   const { firebaseUser, dbUser } = useAuth();
   const isAuthenticated = !!firebaseUser && !!dbUser;
-
+  const [cityId, setCityId] = useState<number | null>(null);
+  const [zoneId, setZoneId] = useState<number | null>(null);
+  const [areaId, setAreaId] = useState<number | null>(null);
   const [deliveryLocation, setDeliveryLocation] = useState<DeliveryLocation>(
     DeliveryLocation.INSIDE_DHAKA,
   );
@@ -131,41 +137,47 @@ const CheckoutPage = () => {
 
     storeGroups.forEach((group) => {
       let subtotal = 0;
-      let totalDiscount = 0;
+      let originalTotal = 0;
 
       group.items.forEach((item) => {
         if (isAuthenticated) {
           const dbItem = item as ICartItem;
-          const price = dbItem.variant?.price
+
+          // Current selling price
+          const currentPrice = dbItem.variant?.price
             ? Number(dbItem.variant.price)
             : Number(dbItem.product.basePrice);
 
-          const comparePrice = dbItem.product.comparePrice
-            ? Number(dbItem.product.comparePrice)
-            : 0;
+          // Original price (for discount calculation)
+          const basePrice =
+            dbItem.product.comparePrice &&
+            Number(dbItem.product.comparePrice) > currentPrice
+              ? Number(dbItem.product.comparePrice)
+              : currentPrice;
 
-          const discount = comparePrice > price ? comparePrice - price : 0;
-
-          subtotal += comparePrice * dbItem.quantity;
-          totalDiscount += discount * dbItem.quantity;
+          subtotal += currentPrice * dbItem.quantity;
+          originalTotal += basePrice * dbItem.quantity;
         } else {
           const guestItem = item as GuestCartItem;
-          subtotal += guestItem.priceSnapshot * guestItem.quantity;
 
-          if (
-            guestItem.comparePrice &&
-            guestItem.comparePrice > guestItem.priceSnapshot
-          ) {
-            totalDiscount +=
-              (guestItem.comparePrice - guestItem.priceSnapshot) *
-              guestItem.quantity;
-          }
+          // Current selling price
+          const currentPrice = guestItem.priceSnapshot;
+
+          // Original price
+          const basePrice =
+            guestItem.comparePrice && guestItem.comparePrice > currentPrice
+              ? guestItem.comparePrice
+              : currentPrice;
+
+          subtotal += currentPrice * guestItem.quantity;
+          originalTotal += basePrice * guestItem.quantity;
         }
       });
 
+      const totalDiscount = originalTotal - subtotal;
       const deliveryCharge =
         deliveryLocation === DeliveryLocation.INSIDE_DHAKA ? 70 : 120;
-      const totalAmount = subtotal - totalDiscount + deliveryCharge;
+      const totalAmount = subtotal + deliveryCharge; // ✅ No discount subtraction!
 
       totals[group.storeId] = {
         subtotal,
@@ -174,7 +186,6 @@ const CheckoutPage = () => {
         totalAmount,
       };
     });
-
     return totals;
   }, [storeGroups, deliveryLocation, isAuthenticated]);
 
@@ -190,10 +201,12 @@ const CheckoutPage = () => {
     customerPhone: string;
     customerName?: string;
     customerEmail?: string;
-    policeStation?: string;
-    deliveryDistrict?: string;
-    deliveryArea?: string;
+    secondaryPhone?: string;
     deliveryAddress?: string;
+    specialInstructions?: string;
+    recipientCityId?: number;
+    recipientZoneId?: number;
+    recipientAreaId?: number;
   }) => {
     if (storeGroups.length === 0) {
       message.error("Your cart is empty!");
@@ -225,10 +238,12 @@ const CheckoutPage = () => {
           customerPhone: formData.customerPhone,
           customerName: formData.customerName || undefined,
           customerEmail: formData.customerEmail || undefined,
-          policeStation: formData.policeStation || undefined,
-          deliveryDistrict: formData.deliveryDistrict || undefined,
-          deliveryArea: formData.deliveryArea || undefined,
+          secondaryPhone: formData.secondaryPhone || undefined,
           deliveryAddress: formData.deliveryAddress || undefined,
+          specialInstructions: formData.specialInstructions || undefined,
+          recipientCityId: cityId || undefined,
+          recipientZoneId: zoneId || undefined,
+          recipientAreaId: areaId || undefined,
           deliveryLocation,
           storeId: group.storeId,
           paymentMethod: PaymentMethod.COD,
@@ -334,37 +349,41 @@ const CheckoutPage = () => {
                   />
                 </Col>
 
-                <Divider>Delivery Address (Optional)</Divider>
+                <Divider>Delivery Information (Optional)</Divider>
 
-                <Col xs={24} md={8}>
-                  <FormInput
-                    name="deliveryDistrict"
-                    label="District"
-                    placeholder="e.g., Dhaka"
+                <Col xs={24}>
+                  <PathaoLocationSelector
+                    cityId={cityId}
+                    zoneId={zoneId}
+                    areaId={areaId}
+                    onCityChange={setCityId}
+                    onZoneChange={setZoneId}
+                    onAreaChange={setAreaId}
+                    required={false}
                   />
                 </Col>
 
-                <Col xs={24} md={8}>
+                <Col xs={24} md={12}>
                   <FormInput
-                    name="policeStation"
-                    label="Thana"
-                    placeholder="e.g., Bandar"
+                    name="secondaryPhone"
+                    label="Secondary Phone"
+                    placeholder="Alternate contact number (optional)"
                   />
                 </Col>
 
-                <Col xs={24} md={8}>
+                <Col xs={24} md={12}>
                   <FormInput
-                    name="deliveryArea"
-                    label="Area"
-                    placeholder="e.g., Dhanmondi"
+                    name="deliveryAddress"
+                    label="Delivery Address"
+                    placeholder="House, Road, Landmark (optional)"
                   />
                 </Col>
 
                 <Col xs={24}>
-                  <FormInput
-                    name="deliveryAddress"
-                    label="Full Address"
-                    placeholder="House, Road, etc. (optional)"
+                  <FormTextArea
+                    name="specialInstructions"
+                    label="Special Instructions"
+                    placeholder="Any special delivery instructions (optional)"
                   />
                 </Col>
 
@@ -375,7 +394,7 @@ const CheckoutPage = () => {
                     value={deliveryLocation}
                     onChange={(e) => setDeliveryLocation(e.target.value)}
                   >
-                    <Space direction="vertical">
+                    <Space orientation="vertical">
                       <Radio value={DeliveryLocation.INSIDE_DHAKA}>
                         Inside Dhaka (70 BDT per order)
                       </Radio>

@@ -12,12 +12,12 @@ import { useAuth } from "@/hooks/useAuth";
 
 const getStatusColor = (status: OrderStatus) => {
   const colors: Record<OrderStatus, string> = {
-    PLACED: "blue",
-    VOICE_CONFIRMED: "cyan",
-    VENDOR_CONFIRMED: "purple",
+    PENDING: "blue",
+    CONFIRMED: "purple",
     PROCESSING: "orange",
-    READY_TO_SHIP: "gold",
+    READY_FOR_PICKUP: "gold",
     SHIPPED: "geekblue",
+    OUT_FOR_DELIVERY: "cyan",
     DELIVERED: "green",
     CANCELLED: "red",
     RETURNED: "volcano",
@@ -191,13 +191,6 @@ const CustomerOrdersPage = () => {
                     >
                       {formatStatus(order.status)}
                     </Tag>
-                    {order.isVoiceConfirmed && (
-                      <div
-                        style={{ fontSize: 11, color: "#52c41a", marginTop: 4 }}
-                      >
-                        ✓ Voice Confirmed
-                      </div>
-                    )}
                   </div>
 
                   {/* Total Amount */}

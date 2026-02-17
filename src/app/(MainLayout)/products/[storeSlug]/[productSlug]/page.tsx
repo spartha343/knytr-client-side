@@ -4,11 +4,21 @@
  * Product Detail Page - Modular Architecture
  * Main orchestrator that uses smaller, focused components
  */
+import { VendorContactButtons } from "./components/VendorContactButtons";
 import { useGuestCart } from "@/hooks/useGuestCart";
 import { useGetCartQuery } from "@/redux/api/cartApi";
 import type { ICart } from "@/types/cart";
 import { useParams, useRouter } from "next/navigation";
-import { Row, Col, Spin, Button, Typography, Divider, message } from "antd";
+import {
+  Row,
+  Col,
+  Spin,
+  Button,
+  Typography,
+  Divider,
+  message,
+  Space,
+} from "antd";
 import Link from "next/link";
 import { useState, useMemo } from "react";
 import Container from "@/components/shared/Container";
@@ -150,6 +160,7 @@ const ProductDetailPage = () => {
           quantity,
         }).unwrap();
         message.success("Added to cart!");
+        router.push("/cart");
       } else {
         // Add to guest cart
         GuestCartManager.add({
@@ -166,6 +177,7 @@ const ProductDetailPage = () => {
           comparePrice: selectedVariant.comparePrice,
         });
         message.success("Added to cart!");
+        router.push("/cart");
       }
     } catch (error: unknown) {
       const err = error as { data?: { message?: string } };
@@ -243,15 +255,17 @@ const ProductDetailPage = () => {
             category={product.category}
           />
 
-          {/* Price Section */}
-          <ProductPricing
-            currentPrice={currentPrice}
-            comparePrice={currentComparePrice}
-            freeShipping={product.freeShipping}
-          />
+          <Space orientation="horizontal">
+            {/* Price Section */}
+            <ProductPricing
+              currentPrice={currentPrice}
+              comparePrice={currentComparePrice}
+              freeShipping={product.freeShipping}
+            />
 
-          {/* Stock Status */}
-          <ProductStockStatus totalStock={totalStock} />
+            {/* Stock Status */}
+            <ProductStockStatus totalStock={totalStock} />
+          </Space>
 
           {/* Variant Selection */}
           <ProductVariantSelector
@@ -276,6 +290,17 @@ const ProductDetailPage = () => {
             onAddToWishlist={handleAddToWishlist}
             hasSelectedVariant={!!selectedVariant}
           />
+
+          {/* Vendor Contact Buttons */}
+          {product.store && (
+            <VendorContactButtons
+              storeName={product.store.name}
+              productName={product.name}
+              whatsappNumber={product.store.whatsappNumber}
+              messengerLink={product.store.messengerLink}
+              contactPhone={product.store.contactPhone}
+            />
+          )}
 
           <Divider />
 

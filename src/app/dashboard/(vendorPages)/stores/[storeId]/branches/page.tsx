@@ -7,6 +7,7 @@ import {
   EditOutlined,
   DeleteOutlined,
   ArrowLeftOutlined,
+  SettingOutlined,
 } from "@ant-design/icons";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -85,6 +86,13 @@ const StoreBranchesPage = () => {
           >
             <Button type="primary" icon={<EditOutlined />} size="small">
               Edit
+            </Button>
+          </Link>
+          <Link
+            href={`/dashboard/stores/${storeId}/branches/${record.id}/pathao-settings`}
+          >
+            <Button type="default" icon={<SettingOutlined />} size="small">
+              Pathao
             </Button>
           </Link>
           <Popconfirm

@@ -31,6 +31,26 @@ export const productApi = baseApi.injectEndpoints({
       providesTags: [tagTypes.product],
     }),
 
+    getProductsByStore: build.query({
+      query: ({ storeId, ...params }) => ({
+        url: PRODUCT_URL,
+        method: "GET",
+        params: {
+          storeId,
+          isActive: true,
+          ...params,
+        },
+      }),
+      transformResponse: (response: {
+        data: unknown;
+        meta: { page: number; limit: number; total: number };
+      }) => ({
+        products: response.data,
+        meta: response.meta,
+      }),
+      providesTags: [tagTypes.product],
+    }),
+
     createProduct: build.mutation({
       query: (data: ICreateProductInput) => ({
         url: PRODUCT_URL,
@@ -62,6 +82,7 @@ export const productApi = baseApi.injectEndpoints({
 export const {
   useGetAllProductsQuery,
   useGetProductByIdQuery,
+  useGetProductsByStoreQuery,
   useCreateProductMutation,
   useUpdateProductMutation,
   useDeleteProductMutation,

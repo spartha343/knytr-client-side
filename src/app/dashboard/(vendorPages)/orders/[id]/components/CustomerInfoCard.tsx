@@ -7,12 +7,14 @@ interface CustomerInfoCardProps {
   customerName: string;
   customerPhone?: string | null;
   customerEmail?: string | null;
+  secondaryPhone?: string | null;
 }
 
 const CustomerInfoCard = ({
   customerName,
   customerPhone,
   customerEmail,
+  secondaryPhone,
 }: CustomerInfoCardProps) => {
   return (
     <Card title="Customer Information" style={{ marginBottom: 16 }}>
@@ -41,6 +43,18 @@ const CustomerInfoCard = ({
         >
           {customerEmail || "-"}
         </Descriptions.Item>
+        {secondaryPhone && (
+          <Descriptions.Item
+            label={
+              <span>
+                <PhoneOutlined /> Secondary Phone
+              </span>
+            }
+            span={2}
+          >
+            {secondaryPhone}
+          </Descriptions.Item>
+        )}
       </Descriptions>
     </Card>
   );

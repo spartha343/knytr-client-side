@@ -33,6 +33,10 @@ export interface IProduct {
     id: string;
     name: string;
     slug: string;
+    logo?: string;
+    whatsappNumber?: string;
+    messengerLink?: string;
+    contactPhone?: string;
   };
   media?: IProductMedia[];
   variants?: IProductVariant[];
