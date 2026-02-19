@@ -99,7 +99,7 @@ const Header = () => {
         },
         {
           key: "orders",
-          label: <Link href="/my-orders">My Orders</Link>,
+          label: <Link href="/orders">My Orders</Link>,
         },
         {
           key: "wishlist",

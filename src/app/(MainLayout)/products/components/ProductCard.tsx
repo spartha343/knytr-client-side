@@ -75,7 +75,6 @@ const ProductCard = ({ product }: ProductCardProps) => {
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    router.push("/cart");
 
     // If already in cart, navigate to cart page
     if (isInCart) {
@@ -85,33 +84,57 @@ const ProductCard = ({ product }: ProductCardProps) => {
 
     try {
       if (isAuthenticated) {
+        // Get first variant if product has variants
+        const variantId =
+          product.variants && product.variants.length > 0
+            ? product.variants[0].id
+            : undefined;
+
         // Add to DB cart
         await addToCart({
           productId: product.id,
+          variantId,
           quantity: 1,
         }).unwrap();
         message.success("Added to cart!");
       } else {
+        // Get first variant if product has variants
+        const firstVariant =
+          product.variants && product.variants.length > 0
+            ? product.variants[0]
+            : null;
+
         // Add to guest cart with full product info
         GuestCartManager.add({
           productId: product.id,
+          variantId: firstVariant?.id,
           quantity: 1,
-          priceSnapshot: Number(product.basePrice),
+          priceSnapshot: firstVariant?.price
+            ? Number(firstVariant.price)
+            : Number(product.basePrice),
           productName: product.name,
           productSlug: product.slug,
           storeId: product.store?.id || product.storeId,
           storeName: product.store?.name || "Unknown Store",
           storeSlug: product.store?.slug || "unknown",
-          imageUrl: imageUrl || undefined,
-          comparePrice: product.comparePrice
-            ? Number(product.comparePrice)
-            : undefined,
+          imageUrl: firstVariant?.imageUrl || imageUrl || undefined,
+          comparePrice: firstVariant?.comparePrice
+            ? Number(firstVariant.comparePrice)
+            : product.comparePrice
+              ? Number(product.comparePrice)
+              : undefined,
+          variantName: firstVariant?.variantAttributes
+            ?.map((va) => va.attributeValue?.value)
+            .filter(Boolean)
+            .join(", "),
         });
         message.success("Added to cart!");
       }
     } catch (error) {
-      console.error("Error adding to cart:", error);
-      message.error("Failed to add to cart");
+      const errorMsg =
+        (error as { data?: { message?: string } })?.data?.message ||
+        "Failed to add to cart";
+      message.error(errorMsg);
     }
   };
 

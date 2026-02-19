@@ -99,7 +99,7 @@ const CheckoutPage = () => {
         if (!groups[storeId]) {
           groups[storeId] = {
             storeId,
-            storeName: `Store ${storeId.substring(0, 8)}`, // We'll improve this later
+            storeName: item.product.store.name,
             items: [],
           };
         }

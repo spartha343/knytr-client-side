@@ -15,6 +15,11 @@ export interface ICartItem {
     basePrice: number;
     comparePrice: number | null;
     isDeleted: boolean;
+    store: {
+      id: string;
+      name: string;
+      slug: string;
+    };
     media: Array<{
       mediaUrl: string;
     }>;
@@ -32,6 +37,15 @@ export interface ICartItem {
           id: string;
           name: string;
         };
+      };
+    }>;
+    inventories: Array<{
+      id: string;
+      quantity: number;
+      reservedQty: number;
+      branch: {
+        id: string;
+        name: string;
       };
     }>;
   } | null;

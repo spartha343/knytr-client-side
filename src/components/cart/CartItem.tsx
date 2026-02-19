@@ -1,9 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Image from "next/image";
-import { Card, Button, InputNumber, message, Badge, Grid } from "antd";
-import { DeleteOutlined, MinusOutlined, PlusOutlined } from "@ant-design/icons";
+import { Card, Button, InputNumber, message, Badge, Grid, Tag } from "antd";
+import {
+  DeleteOutlined,
+  MinusOutlined,
+  PlusOutlined,
+  WarningOutlined,
+} from "@ant-design/icons";
 import {
   useUpdateCartItemMutation,
   useRemoveCartItemMutation,
@@ -20,6 +25,34 @@ interface CartItemProps {
   onUpdate?: () => void;
 }
 
+// Stock info component - defined OUTSIDE CartItem to avoid recreation on render
+const StockInfo = ({ availableStock }: { availableStock: number }) => {
+  const isOutOfStock = availableStock <= 0;
+  const isLowStock = availableStock > 0 && availableStock <= 5;
+
+  if (isOutOfStock) {
+    return (
+      <Tag color="error" icon={<WarningOutlined />} style={{ margin: 0 }}>
+        Out of Stock
+      </Tag>
+    );
+  }
+
+  if (isLowStock) {
+    return (
+      <Tag color="warning" style={{ margin: 0 }}>
+        Only {availableStock} left
+      </Tag>
+    );
+  }
+
+  return (
+    <Tag color="success" style={{ margin: 0 }}>
+      {availableStock} available
+    </Tag>
+  );
+};
+
 const CartItem = ({ item, isAuthenticated, onUpdate }: CartItemProps) => {
   const [quantity, setQuantity] = useState(item.quantity);
   const screens = useBreakpoint();
@@ -31,6 +64,22 @@ const CartItem = ({ item, isAuthenticated, onUpdate }: CartItemProps) => {
   const isDbItem = (item: ICartItem | GuestCartItem): item is ICartItem => {
     return "id" in item && "product" in item;
   };
+
+  // Calculate available stock from inventories
+  const availableStock = useMemo(() => {
+    if (!isDbItem(item) || !item.variant?.inventories) {
+      return 999; // Default high number for guest cart or products without variants
+    }
+
+    const total = item.variant.inventories.reduce(
+      (sum, inv) => sum + (inv.quantity - inv.reservedQty),
+      0,
+    );
+
+    return total;
+  }, [item]);
+
+  const isOutOfStock = availableStock <= 0;
 
   const productName = isDbItem(item) ? item.product.name : item.productName;
   const imageUrl = isDbItem(item)
@@ -73,13 +122,24 @@ const CartItem = ({ item, isAuthenticated, onUpdate }: CartItemProps) => {
 
   const handleQtyChange = async (newQty: number) => {
     if (!newQty || newQty < 1) return;
+
+    // Check stock limit
+    if (newQty > availableStock) {
+      message.warning(`Only ${availableStock} units available in stock`);
+      return;
+    }
+
     setQuantity(newQty);
 
     if (isAuthenticated && isDbItem(item)) {
       try {
         await updateCartItem({ itemId: item.id, quantity: newQty }).unwrap();
-      } catch {
-        message.error("Failed to update");
+        message.success("Quantity updated");
+      } catch (error) {
+        const errorMsg =
+          (error as { data?: { message?: string } })?.data?.message ||
+          "Failed to update quantity";
+        message.error(errorMsg);
         setQuantity(item.quantity);
       }
     } else {
@@ -96,14 +156,17 @@ const CartItem = ({ item, isAuthenticated, onUpdate }: CartItemProps) => {
     if (isAuthenticated && isDbItem(item)) {
       try {
         await removeCartItem(item.id).unwrap();
-        message.success("Removed");
-      } catch {
-        message.error("Failed to remove");
+        message.success("Item removed from cart");
+      } catch (error) {
+        const errorMsg =
+          (error as { data?: { message?: string } })?.data?.message ||
+          "Failed to remove item";
+        message.error(errorMsg);
       }
     } else {
       GuestCartManager.remove(item.productId, item.variantId || undefined);
       onUpdate?.();
-      message.success("Removed");
+      message.success("Item removed from cart");
     }
   };
 
@@ -186,6 +249,11 @@ const CartItem = ({ item, isAuthenticated, onUpdate }: CartItemProps) => {
                 </>
               )}
             </div>
+
+            {/* Stock Info */}
+            <div style={{ marginTop: "6px" }}>
+              <StockInfo availableStock={availableStock} />
+            </div>
           </div>
         </div>
 
@@ -205,23 +273,24 @@ const CartItem = ({ item, isAuthenticated, onUpdate }: CartItemProps) => {
               size="small"
               icon={<MinusOutlined style={{ fontSize: "10px" }} />}
               onClick={() => quantity > 1 && handleQtyChange(quantity - 1)}
-              disabled={quantity <= 1}
+              disabled={quantity <= 1 || isOutOfStock}
               style={{ width: "28px", height: "28px", padding: 0 }}
             />
             <InputNumber
               min={1}
-              max={99}
+              max={availableStock}
               value={quantity}
               onChange={(val) => val && handleQtyChange(val)}
               style={{ width: "50px" }}
               size="small"
               controls={false}
+              disabled={isOutOfStock}
             />
             <Button
               size="small"
               icon={<PlusOutlined style={{ fontSize: "10px" }} />}
-              onClick={() => quantity < 99 && handleQtyChange(quantity + 1)}
-              disabled={quantity >= 99}
+              onClick={() => handleQtyChange(quantity + 1)}
+              disabled={quantity >= availableStock || isOutOfStock}
               style={{ width: "28px", height: "28px", padding: 0 }}
             />
           </div>
@@ -246,7 +315,7 @@ const CartItem = ({ item, isAuthenticated, onUpdate }: CartItemProps) => {
     );
   }
 
-  // Desktop Layout (unchanged)
+  // Desktop Layout
   return (
     <Card
       style={{ marginBottom: "10px" }}
@@ -323,6 +392,11 @@ const CartItem = ({ item, isAuthenticated, onUpdate }: CartItemProps) => {
             )}
           </div>
 
+          {/* Stock Info */}
+          <div style={{ marginBottom: "6px" }}>
+            <StockInfo availableStock={availableStock} />
+          </div>
+
           {/* Discount Savings */}
           {hasDiscount && (
             <div
@@ -349,23 +423,24 @@ const CartItem = ({ item, isAuthenticated, onUpdate }: CartItemProps) => {
               size="small"
               icon={<MinusOutlined style={{ fontSize: "10px" }} />}
               onClick={() => quantity > 1 && handleQtyChange(quantity - 1)}
-              disabled={quantity <= 1}
+              disabled={quantity <= 1 || isOutOfStock}
               style={{ width: "26px", height: "26px", padding: 0 }}
             />
             <InputNumber
               min={1}
-              max={99}
+              max={availableStock}
               value={quantity}
               onChange={(val) => val && handleQtyChange(val)}
               style={{ width: "50px" }}
               size="small"
               controls={false}
+              disabled={isOutOfStock}
             />
             <Button
               size="small"
               icon={<PlusOutlined style={{ fontSize: "10px" }} />}
-              onClick={() => quantity < 99 && handleQtyChange(quantity + 1)}
-              disabled={quantity >= 99}
+              onClick={() => handleQtyChange(quantity + 1)}
+              disabled={quantity >= availableStock || isOutOfStock}
               style={{ width: "26px", height: "26px", padding: 0 }}
             />
           </div>
