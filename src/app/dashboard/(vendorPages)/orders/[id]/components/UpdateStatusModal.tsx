@@ -9,6 +9,7 @@ interface UpdateStatusModalProps {
   isOpen: boolean;
   currentStatus: OrderStatus;
   orderId: string;
+  hasPathaoDelivery?: boolean;
   onClose: () => void;
 }
 
@@ -27,16 +28,51 @@ const getStatusColor = (status: OrderStatus) => {
   };
   return colors[status] || "default";
 };
+
+// Valid status transitions (matches backend)
+const STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
+  PENDING: [OrderStatus.CONFIRMED],
+  CONFIRMED: [OrderStatus.PROCESSING],
+  PROCESSING: [OrderStatus.READY_FOR_PICKUP],
+  READY_FOR_PICKUP: [OrderStatus.SHIPPED],
+  SHIPPED: [
+    OrderStatus.OUT_FOR_DELIVERY,
+    OrderStatus.DELIVERED,
+    OrderStatus.RETURNED,
+  ],
+  OUT_FOR_DELIVERY: [OrderStatus.DELIVERED, OrderStatus.RETURNED],
+  DELIVERED: [OrderStatus.RETURNED],
+  CANCELLED: [],
+  RETURNED: [],
+};
+
+// Status labels
+const STATUS_LABELS: Record<OrderStatus, string> = {
+  PENDING: "Pending",
+  CONFIRMED: "Confirmed",
+  PROCESSING: "Processing",
+  READY_FOR_PICKUP: "Ready for Pickup",
+  SHIPPED: "Shipped",
+  OUT_FOR_DELIVERY: "Out for Delivery",
+  DELIVERED: "Delivered",
+  CANCELLED: "Cancelled",
+  RETURNED: "Returned",
+};
+
 const UpdateStatusModal = ({
   isOpen,
   currentStatus,
   orderId,
+  hasPathaoDelivery = false,
   onClose,
 }: UpdateStatusModalProps) => {
   const [newStatus, setNewStatus] = useState<OrderStatus | null>(null);
 
   const [updateOrderStatus, { isLoading: isUpdating }] =
     useUpdateOrderStatusMutation();
+
+  // Get valid transitions for current status
+  const validTransitions = STATUS_TRANSITIONS[currentStatus] || [];
 
   // Handle status update
   const handleStatusUpdate = async () => {
@@ -56,6 +92,7 @@ const UpdateStatusModal = ({
       message.success("Order status updated successfully!");
       handleClose();
     } catch (error: unknown) {
+      console.log(error);
       console.error("Failed to update status:", error);
       message.error("Failed to update order status. Please try again.");
     }
@@ -81,37 +118,71 @@ const UpdateStatusModal = ({
             color={getStatusColor(currentStatus)}
             style={{ fontSize: 14, padding: "4px 12px" }}
           >
-            {currentStatus.replace(/_/g, " ")}
+            {STATUS_LABELS[currentStatus]}
           </Tag>
         </Form.Item>
 
-        <Form.Item
-          label="New Status"
-          required
-          help={!newStatus ? "Please select a new status" : ""}
-          validateStatus={!newStatus ? "error" : ""}
-        >
-          <Select
-            placeholder="Select new status"
-            value={newStatus}
-            onChange={(value) => setNewStatus(value)}
-            size="large"
+        {validTransitions.length === 0 ? (
+          <Form.Item>
+            <div
+              style={{
+                padding: "12px",
+                background: "#f5f5f5",
+                borderRadius: "4px",
+              }}
+            >
+              <p style={{ margin: 0, color: "#666" }}>
+                No status transitions available from{" "}
+                {STATUS_LABELS[currentStatus]}.
+                {currentStatus === OrderStatus.CANCELLED &&
+                  " Order is cancelled."}
+                {currentStatus === OrderStatus.RETURNED &&
+                  " Order is returned."}
+                {currentStatus === OrderStatus.DELIVERED &&
+                  " Order is delivered. Can only be returned."}
+              </p>
+            </div>
+          </Form.Item>
+        ) : (
+          <Form.Item
+            label="New Status"
+            required
+            help={!newStatus ? "Please select a new status" : ""}
+            validateStatus={!newStatus ? "error" : ""}
           >
-            <Select.Option value="PENDING">Pending</Select.Option>
-            <Select.Option value="CONFIRMED">Confirmed</Select.Option>
-            <Select.Option value="PROCESSING">Processing</Select.Option>
-            <Select.Option value="READY_FOR_PICKUP">
-              Ready for Pickup
-            </Select.Option>
-            <Select.Option value="SHIPPED">Shipped</Select.Option>
-            <Select.Option value="OUT_FOR_DELIVERY">
-              Out for Delivery
-            </Select.Option>
-            <Select.Option value="DELIVERED">Delivered</Select.Option>
-            <Select.Option value="CANCELLED">Cancelled</Select.Option>
-            <Select.Option value="RETURNED">Returned</Select.Option>
-          </Select>
-        </Form.Item>
+            <Select
+              placeholder="Select new status"
+              value={newStatus}
+              onChange={(value) => setNewStatus(value)}
+              size="large"
+            >
+              {validTransitions.map((status) => (
+                <Select.Option key={status} value={status}>
+                  {STATUS_LABELS[status]}
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
+        )}
+
+        {hasPathaoDelivery &&
+          currentStatus === OrderStatus.READY_FOR_PICKUP && (
+            <Form.Item>
+              <div
+                style={{
+                  padding: "8px 12px",
+                  background: "#e6f7ff",
+                  border: "1px solid #91d5ff",
+                  borderRadius: "4px",
+                }}
+              >
+                <p style={{ margin: 0, fontSize: "12px", color: "#0050b3" }}>
+                  ℹ️ This order has Pathao delivery. Mark as
+                  &rsquo;Shipped&rsquo; after handing over to Pathao.
+                </p>
+              </div>
+            </Form.Item>
+          )}
 
         <Form.Item style={{ marginBottom: 0 }}>
           <Space style={{ width: "100%", justifyContent: "flex-end" }}>
@@ -120,7 +191,7 @@ const UpdateStatusModal = ({
               type="primary"
               onClick={handleStatusUpdate}
               loading={isUpdating}
-              disabled={!newStatus}
+              disabled={!newStatus || validTransitions.length === 0}
             >
               Update Status
             </Button>

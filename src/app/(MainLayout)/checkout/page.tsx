@@ -256,12 +256,23 @@ const CheckoutPage = () => {
       });
 
       // Wait for all orders to complete
-      await Promise.all(orderPromises);
+      // Each store returns Order[] (one per branch)
+      const allOrdersArrays = await Promise.all(orderPromises);
 
-      const orderCount = storeGroups.length;
-      message.success(
-        `${orderCount} order${orderCount > 1 ? "s" : ""} placed successfully!`,
+      // Flatten the arrays to get total order count
+      const totalOrders = allOrdersArrays.reduce(
+        (sum, orders) => sum + orders.length,
+        0,
       );
+
+      // Show success message
+      if (totalOrders > 1) {
+        message.success(
+          `${totalOrders} orders placed successfully! Your items have been split by branch for faster delivery.`,
+        );
+      } else {
+        message.success("Order placed successfully!");
+      }
 
       // Clear guest cart if not authenticated
       if (!isAuthenticated) {
@@ -308,7 +319,8 @@ const CheckoutPage = () => {
           }}
         >
           <ShopOutlined /> You have items from {storeGroups.length} different
-          stores. Separate orders will be created for each store.
+          stores. Your order will be automatically split by store and branch for
+          faster delivery.
         </div>
       )}
 

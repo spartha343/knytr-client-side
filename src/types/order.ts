@@ -76,6 +76,15 @@ export interface IOrder {
   userId?: string | null;
   storeId: string;
   assignedBranchId?: string | null;
+  cancellationReason?: string | null;
+  cancelledBy?: string | null;
+  cancelledAt?: string | null;
+  activities?: IOrderActivity[];
+  cancelledByUser?: {
+    id: string;
+    email?: string | null;
+    firebaseUid: string;
+  } | null;
   pathaoDelivery?: {
     id: string;
     consignmentId?: string | null;
@@ -156,4 +165,22 @@ export interface IUpdateOrderStatusInput {
 
 export interface IAssignBranchInput {
   branchId: string;
+}
+
+export interface ICancelOrderInput {
+  reason?: string;
+}
+
+export interface IOrderActivity {
+  id: string;
+  orderId: string;
+  userId?: string | null;
+  action: string;
+  description?: string | null;
+  createdAt: string;
+  user?: {
+    id: string;
+    email?: string | null;
+    firebaseUid: string;
+  } | null;
 }

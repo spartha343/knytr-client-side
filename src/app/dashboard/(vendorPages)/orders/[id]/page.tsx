@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Spin, Alert, Space } from "antd";
 import { useGetOrderByIdQuery } from "@/redux/api/orderApi";
-import { IOrder } from "@/types/order";
+import { IOrder, OrderStatus } from "@/types/order";
 import OrderHeader from "./components/OrderHeader";
 import CustomerInfoCard from "./components/CustomerInfoCard";
 import StoreInfoCard from "./components/StoreInfoCard";
@@ -15,12 +15,14 @@ import UpdateStatusModal from "./components/UpdateStatusModal";
 import BookPathaoDeliveryModal from "./components/BookPathaoDeliveryModal";
 import PathaoDeliveryCard from "./components/PathaoDeliveryCard";
 import EditOrderModal from "./components/EditOrderModal";
+import CancelOrderModal from "./components/CancelOrderModal";
 
 const VendorOrderDetailPage = () => {
   const params = useParams();
   const router = useRouter();
   const [isPathaoModalOpen, setIsPathaoModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const orderId = params.id as string;
 
   // State for status update modal
@@ -34,6 +36,17 @@ const VendorOrderDetailPage = () => {
   } = useGetOrderByIdQuery(orderId, {
     skip: !orderId,
   }) as { data: IOrder | undefined; isLoading: boolean; error: unknown };
+
+  // Check if order can be cancelled
+  const canCancelOrder = (status: OrderStatus): boolean => {
+    const cancellableStatuses: OrderStatus[] = [
+      OrderStatus.PENDING,
+      OrderStatus.CONFIRMED,
+      OrderStatus.PROCESSING,
+      OrderStatus.READY_FOR_PICKUP,
+    ];
+    return cancellableStatuses.includes(status);
+  };
 
   // Loading state
   if (isLoading) {
@@ -56,6 +69,9 @@ const VendorOrderDetailPage = () => {
     );
   }
 
+  const hasPathaoDelivery = !!order.pathaoDelivery;
+  const orderCanBeCancelled = canCancelOrder(order.status);
+
   return (
     <div>
       <OrderHeader
@@ -63,9 +79,21 @@ const VendorOrderDetailPage = () => {
         orderNumber={order.orderNumber}
         status={order.status}
         createdAt={order.createdAt}
+        hasPathaoDelivery={hasPathaoDelivery}
         onUpdateStatus={() => setIsModalOpen(true)}
-        onEditOrder={() => setIsEditModalOpen(true)}
-        onBookPathaoDelivery={() => setIsPathaoModalOpen(true)}
+        onEditOrder={
+          order.status === OrderStatus.PENDING
+            ? () => setIsEditModalOpen(true)
+            : undefined
+        }
+        onCancelOrder={
+          orderCanBeCancelled ? () => setIsCancelModalOpen(true) : undefined
+        }
+        onBookPathaoDelivery={
+          order.status === OrderStatus.READY_FOR_PICKUP && !hasPathaoDelivery
+            ? () => setIsPathaoModalOpen(true)
+            : undefined
+        }
         onBack={() => router.back()}
       />
 
@@ -121,7 +149,16 @@ const VendorOrderDetailPage = () => {
         isOpen={isModalOpen}
         currentStatus={order.status}
         orderId={order.id}
+        hasPathaoDelivery={hasPathaoDelivery}
         onClose={() => setIsModalOpen(false)}
+      />
+
+      {/* Cancel Order Modal */}
+      <CancelOrderModal
+        isOpen={isCancelModalOpen}
+        orderId={order.id}
+        orderNumber={order.orderNumber}
+        onClose={() => setIsCancelModalOpen(false)}
       />
 
       <BookPathaoDeliveryModal

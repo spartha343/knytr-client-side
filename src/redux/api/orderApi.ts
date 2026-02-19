@@ -6,6 +6,7 @@ import type {
   IUpdateOrderInput,
   IUpdateOrderStatusInput,
   IAssignBranchInput,
+  ICancelOrderInput,
 } from "@/types/order";
 
 const ORDER_URL = "/orders";
@@ -13,8 +14,8 @@ const ORDER_URL = "/orders";
 // PUBLIC API for guest checkout
 export const publicOrderApi = publicApi.injectEndpoints({
   endpoints: (build) => ({
-    // Create order as guest (no auth)
-    createGuestOrder: build.mutation({
+    // Create order as guest (no auth) - Returns array of orders (one per branch)
+    createGuestOrder: build.mutation<unknown[], ICreateOrderInput>({
       query: (data: ICreateOrderInput) => ({
         url: `${ORDER_URL}/public/create`,
         method: "POST",
@@ -28,8 +29,8 @@ export const publicOrderApi = publicApi.injectEndpoints({
 // AUTHENTICATED API for logged-in users
 export const orderApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
-    // Create order (authenticated)
-    createOrder: build.mutation({
+    // Create order (authenticated) - Returns array of orders (one per branch)
+    createOrder: build.mutation<unknown[], ICreateOrderInput>({
       query: (data: ICreateOrderInput) => ({
         url: ORDER_URL,
         method: "POST",
@@ -119,6 +120,16 @@ export const orderApi = baseApi.injectEndpoints({
       invalidatesTags: [tagTypes.order],
     }),
 
+    // Cancel order (customer can cancel PENDING, vendor can cancel PENDING/CONFIRMED/PROCESSING/READY_FOR_PICKUP)
+    cancelOrder: build.mutation({
+      query: ({ id, data }: { id: string; data: ICancelOrderInput }) => ({
+        url: `${ORDER_URL}/${id}/cancel`,
+        method: "PATCH",
+        data,
+      }),
+      invalidatesTags: [tagTypes.order],
+    }),
+
     // Assign branch to order item (vendor only)
     assignBranchToItem: build.mutation({
       query: ({
@@ -157,6 +168,7 @@ export const {
   useGetCustomerOrdersQuery,
   useGetOrderByIdQuery,
   useUpdateOrderMutation,
+  useCancelOrderMutation,
   useUpdateOrderStatusMutation,
   useCreateManualOrderMutation,
   useAssignBranchToItemMutation,

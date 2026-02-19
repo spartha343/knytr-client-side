@@ -5,6 +5,7 @@ import {
   ArrowLeftOutlined,
   EditOutlined,
   RocketOutlined,
+  CloseCircleOutlined,
 } from "@ant-design/icons";
 import { OrderStatus } from "@/types/order";
 import ActionBar from "@/components/ui/ActionBar";
@@ -21,8 +22,10 @@ interface OrderHeaderProps {
   orderNumber: string;
   status: OrderStatus;
   createdAt: string;
+  hasPathaoDelivery?: boolean; // ADD THIS
   onUpdateStatus: () => void;
   onEditOrder?: () => void;
+  onCancelOrder?: () => void;
   onBookPathaoDelivery?: () => void;
   onBack: () => void;
 }
@@ -48,8 +51,10 @@ const OrderHeader = ({
   orderNumber,
   status,
   createdAt,
+  hasPathaoDelivery,
   onUpdateStatus,
   onEditOrder,
+  onCancelOrder,
   onBookPathaoDelivery,
   onBack,
 }: OrderHeaderProps) => {
@@ -141,15 +146,37 @@ const OrderHeader = ({
                 Edit Order
               </Button>
             )}
-            {onBookPathaoDelivery && status === "READY_FOR_PICKUP" && (
+            {onCancelOrder && (
               <Button
-                type="primary"
-                icon={<RocketOutlined />}
-                onClick={onBookPathaoDelivery}
-                style={{ background: "#52c41a", borderColor: "#52c41a" }}
+                danger
+                icon={<CloseCircleOutlined />}
+                onClick={onCancelOrder}
               >
-                Book Pathao Delivery
+                Cancel Order
               </Button>
+            )}
+            {/* Pathao Delivery Button */}
+            {hasPathaoDelivery ? (
+              <Button
+                type="default"
+                icon={<RocketOutlined />}
+                disabled
+                style={{ background: "#f0f0f0" }}
+              >
+                Pathao Delivery Booked ✓
+              </Button>
+            ) : (
+              onBookPathaoDelivery &&
+              status === "READY_FOR_PICKUP" && (
+                <Button
+                  type="primary"
+                  icon={<RocketOutlined />}
+                  onClick={onBookPathaoDelivery}
+                  style={{ background: "#52c41a", borderColor: "#52c41a" }}
+                >
+                  Book Pathao Delivery
+                </Button>
+              )
             )}
             <Button
               type="default"
