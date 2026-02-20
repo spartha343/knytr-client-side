@@ -22,14 +22,24 @@ interface GuestCart {
 const CART_STORAGE_KEY = "knytr_guest_cart";
 
 export class GuestCartManager {
+  // Check if we're in browser environment
+  private static isBrowser(): boolean {
+    return typeof window !== "undefined";
+  }
+
   // Get entire cart
   static get(): GuestCart | null {
+    if (!this.isBrowser()) return null;
+
     try {
       const cartData = localStorage.getItem(CART_STORAGE_KEY);
       if (!cartData) return null;
       return JSON.parse(cartData);
     } catch (error) {
-      console.error("Error reading guest cart:", error);
+      // Only log errors in development
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error reading guest cart:", error);
+      }
       return null;
     }
   }
@@ -47,16 +57,22 @@ export class GuestCartManager {
 
   // Save cart to localStorage
   private static saveCart(cart: GuestCart): void {
+    if (!this.isBrowser()) return;
+
     try {
       cart.updatedAt = new Date().toISOString();
       localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
     } catch (error) {
-      console.error("Error saving guest cart:", error);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error saving guest cart:", error);
+      }
     }
   }
 
   // Add item to cart (or update quantity if exists)
   static add(item: GuestCartItem): void {
+    if (!this.isBrowser()) return;
+
     let cart = this.get();
     if (!cart) {
       cart = this.initCart();
@@ -87,6 +103,8 @@ export class GuestCartManager {
     variantId: string | undefined,
     quantity: number,
   ): void {
+    if (!this.isBrowser()) return;
+
     const cart = this.get();
     if (!cart) return;
 
@@ -109,6 +127,8 @@ export class GuestCartManager {
 
   // Remove item from cart
   static remove(productId: string, variantId: string | undefined): void {
+    if (!this.isBrowser()) return;
+
     const cart = this.get();
     if (!cart) return;
 
@@ -125,15 +145,21 @@ export class GuestCartManager {
 
   // Clear entire cart
   static clear(): void {
+    if (!this.isBrowser()) return;
+
     try {
       localStorage.removeItem(CART_STORAGE_KEY);
     } catch (error) {
-      console.error("Error clearing guest cart:", error);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error clearing guest cart:", error);
+      }
     }
   }
 
   // Get total number of items
   static getItemCount(): number {
+    if (!this.isBrowser()) return 0;
+
     const cart = this.get();
     if (!cart) return 0;
     return cart.items.reduce((total, item) => total + item.quantity, 0);
@@ -141,6 +167,8 @@ export class GuestCartManager {
 
   // Get cart subtotal
   static getSubtotal(): number {
+    if (!this.isBrowser()) return 0;
+
     const cart = this.get();
     if (!cart) return 0;
     return cart.items.reduce(
@@ -154,6 +182,8 @@ export class GuestCartManager {
     productId: string,
     variantId: string | undefined,
   ): GuestCartItem | null {
+    if (!this.isBrowser()) return null;
+
     const cart = this.get();
     if (!cart) return null;
 
@@ -168,11 +198,14 @@ export class GuestCartManager {
 
   // Check if item exists in cart
   static hasItem(productId: string, variantId: string | undefined): boolean {
+    if (!this.isBrowser()) return false;
     return this.getItem(productId, variantId) !== null;
   }
 
   // Get all items
   static getItems(): GuestCartItem[] {
+    if (!this.isBrowser()) return [];
+
     const cart = this.get();
     return cart?.items || [];
   }
