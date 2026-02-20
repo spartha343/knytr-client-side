@@ -13,9 +13,9 @@ interface PathaoLocationSelectorProps {
   cityId?: number | null;
   zoneId?: number | null;
   areaId?: number | null;
-  onCityChange: (cityId: number | null) => void;
-  onZoneChange: (zoneId: number | null) => void;
-  onAreaChange: (areaId: number | null) => void;
+  onCityChange: (cityId: number | null, cityName: string) => void;
+  onZoneChange: (zoneId: number | null, zoneName: string) => void;
+  onAreaChange: (areaId: number | null, areaName: string) => void;
   disabled?: boolean;
   required?: boolean;
 }
@@ -49,16 +49,16 @@ const PathaoLocationSelector = ({
   const areasData = areas as IPathaoArea[] | undefined;
 
   const handleCityChange = (value: number) => {
-    onCityChange(value);
-    // Reset dependent fields
-    onZoneChange(null);
-    onAreaChange(null);
+    const name = citiesData?.find((c) => c.cityId === value)?.name ?? "";
+    onCityChange(value, name);
+    onZoneChange(null, "");
+    onAreaChange(null, "");
   };
 
   const handleZoneChange = (value: number) => {
-    onZoneChange(value);
-    // Reset dependent field
-    onAreaChange(null);
+    const name = zonesData?.find((z) => z.zoneId === value)?.name ?? "";
+    onZoneChange(value, name);
+    onAreaChange(null, "");
   };
 
   return (
@@ -131,7 +131,10 @@ const PathaoLocationSelector = ({
         <Select
           placeholder={zoneId ? "Select Area" : "Select Zone first"}
           value={areaId}
-          onChange={onAreaChange}
+          onChange={(value: number) => {
+            const name = areasData?.find((a) => a.areaId === value)?.name ?? "";
+            onAreaChange(value, name);
+          }}
           loading={loadingAreas}
           disabled={disabled || !zoneId}
           allowClear

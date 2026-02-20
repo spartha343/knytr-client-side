@@ -11,13 +11,15 @@ interface ReviewStepProps {
   customerPhone: string;
   customerName: string;
   customerEmail: string;
+  secondaryPhone: string;
   items: OrderItem[];
   deliveryType: DeliveryLocation;
-  deliveryDistrict: string;
-  policeStation: string;
-  deliveryArea: string;
+  cityName: string;
+  zoneName: string;
+  areaName: string;
   deliveryAddress: string;
   deliveryCharge: number;
+  specialInstructions: string;
   paymentMethod: PaymentMethod;
 }
 
@@ -26,20 +28,20 @@ const ReviewStep = ({
   customerPhone,
   customerName,
   customerEmail,
+  secondaryPhone,
   items,
   deliveryType,
-  deliveryDistrict,
-  policeStation,
-  deliveryArea,
+  cityName,
+  zoneName,
+  areaName,
   deliveryAddress,
   deliveryCharge,
+  specialInstructions,
   paymentMethod,
 }: ReviewStepProps) => {
-  // Calculate totals
   const itemsSubtotal = items.reduce((sum, item) => sum + item.subtotal, 0);
   const totalAmount = itemsSubtotal + deliveryCharge;
 
-  // Table columns for items
   const columns = [
     {
       title: "Product",
@@ -96,10 +98,13 @@ const ReviewStep = ({
       <Card title="Customer Information" size="small" style={{ marginTop: 16 }}>
         <Descriptions column={2} size="small">
           <Descriptions.Item label="Phone">{customerPhone}</Descriptions.Item>
+          <Descriptions.Item label="Secondary Phone">
+            {secondaryPhone || "-"}
+          </Descriptions.Item>
           <Descriptions.Item label="Name">
             {customerName || "-"}
           </Descriptions.Item>
-          <Descriptions.Item label="Email" span={2}>
+          <Descriptions.Item label="Email">
             {customerEmail || "-"}
           </Descriptions.Item>
         </Descriptions>
@@ -125,22 +130,29 @@ const ReviewStep = ({
       <Card title="Delivery Information" size="small" style={{ marginTop: 16 }}>
         <Descriptions column={1} size="small">
           <Descriptions.Item label="Delivery Type">
-            <Tag color={deliveryType === "INSIDE_DHAKA" ? "blue" : "green"}>
-              {deliveryType === "INSIDE_DHAKA"
+            <Tag
+              color={
+                deliveryType === DeliveryLocation.INSIDE_DHAKA
+                  ? "blue"
+                  : "green"
+              }
+            >
+              {deliveryType === DeliveryLocation.INSIDE_DHAKA
                 ? "Inside Dhaka"
                 : "Outside Dhaka"}
             </Tag>
           </Descriptions.Item>
-          <Descriptions.Item label="District">
-            {deliveryDistrict}
+          <Descriptions.Item label="City">{cityName || "-"}</Descriptions.Item>
+          <Descriptions.Item label="Zone">{zoneName || "-"}</Descriptions.Item>
+          <Descriptions.Item label="Area">{areaName || "-"}</Descriptions.Item>
+          <Descriptions.Item label="Delivery Address">
+            {deliveryAddress || "-"}
           </Descriptions.Item>
-          <Descriptions.Item label="Police Station">
-            {policeStation}
-          </Descriptions.Item>
-          <Descriptions.Item label="Area">{deliveryArea}</Descriptions.Item>
-          <Descriptions.Item label="Full Address">
-            {deliveryAddress}
-          </Descriptions.Item>
+          {specialInstructions && (
+            <Descriptions.Item label="Special Instructions">
+              {specialInstructions}
+            </Descriptions.Item>
+          )}
         </Descriptions>
       </Card>
 

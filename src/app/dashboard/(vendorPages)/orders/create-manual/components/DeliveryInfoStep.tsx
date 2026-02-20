@@ -1,48 +1,80 @@
 "use client";
 
-import { Form, Input, Radio } from "antd";
-import { HomeOutlined, EnvironmentOutlined } from "@ant-design/icons";
+import {
+  Form,
+  Input,
+  Radio,
+  InputNumber,
+  Row,
+  Col,
+  Typography,
+  Divider,
+} from "antd";
+import {
+  HomeOutlined,
+  PhoneOutlined,
+  InfoCircleOutlined,
+} from "@ant-design/icons";
 import { DeliveryLocation } from "@/types/order";
+import PathaoLocationSelector from "@/components/pathao/PathaoLocationSelector";
 
 const { TextArea } = Input;
+const { Text } = Typography;
 
 interface DeliveryInfoStepProps {
   deliveryType: DeliveryLocation;
-  deliveryDistrict: string;
-  policeStation: string;
-  deliveryArea: string;
+  cityId: number | null;
+  zoneId: number | null;
+  areaId: number | null;
   deliveryAddress: string;
   deliveryCharge: number;
+  secondaryPhone: string;
+  specialInstructions: string;
   onDeliveryTypeChange: (value: DeliveryLocation) => void;
-  onDeliveryDistrictChange: (value: string) => void;
-  onPoliceStationChange: (value: string) => void;
-  onDeliveryAreaChange: (value: string) => void;
+  onCityChange: (cityId: number | null, cityName: string) => void;
+  onZoneChange: (zoneId: number | null, zoneName: string) => void;
+  onAreaChange: (areaId: number | null, areaName: string) => void;
   onDeliveryAddressChange: (value: string) => void;
   onDeliveryChargeChange: (value: number) => void;
+  onSecondaryPhoneChange: (value: string) => void;
+  onSpecialInstructionsChange: (value: string) => void;
 }
 
 const DeliveryInfoStep = ({
   deliveryType,
-  deliveryDistrict,
-  policeStation,
-  deliveryArea,
+  cityId,
+  zoneId,
+  areaId,
   deliveryAddress,
   deliveryCharge,
+  secondaryPhone,
+  specialInstructions,
   onDeliveryTypeChange,
-  onDeliveryDistrictChange,
-  onPoliceStationChange,
-  onDeliveryAreaChange,
+  onCityChange,
+  onZoneChange,
+  onAreaChange,
   onDeliveryAddressChange,
   onDeliveryChargeChange,
+  onSecondaryPhoneChange,
+  onSpecialInstructionsChange,
 }: DeliveryInfoStepProps) => {
-  // Default delivery charges
   const defaultCharge =
     deliveryType === DeliveryLocation.INSIDE_DHAKA ? 70 : 120;
 
+  const handleDeliveryTypeChange = (value: DeliveryLocation) => {
+    onDeliveryTypeChange(value);
+    // Auto-reset to default charge when location type changes
+    if (deliveryCharge === 70 || deliveryCharge === 120) {
+      onDeliveryChargeChange(
+        value === DeliveryLocation.INSIDE_DHAKA ? 70 : 120,
+      );
+    }
+  };
+
   return (
-    <div style={{ maxWidth: 600, margin: "0 auto" }}>
+    <div style={{ maxWidth: 700, margin: "0 auto" }}>
       <Form layout="vertical">
-        {/* Delivery Type */}
+        {/* Delivery Location Type */}
         <Form.Item
           label={
             <span>
@@ -53,19 +85,7 @@ const DeliveryInfoStep = ({
         >
           <Radio.Group
             value={deliveryType}
-            onChange={(e) => {
-              onDeliveryTypeChange(e.target.value);
-              // Auto-set default charge when location changes (if not custom)
-              if (
-                !deliveryCharge ||
-                deliveryCharge === 70 ||
-                deliveryCharge === 120
-              ) {
-                onDeliveryChargeChange(
-                  e.target.value === DeliveryLocation.INSIDE_DHAKA ? 70 : 120,
-                );
-              }
-            }}
+            onChange={(e) => handleDeliveryTypeChange(e.target.value)}
             size="large"
           >
             <Radio value={DeliveryLocation.INSIDE_DHAKA}>
@@ -77,85 +97,101 @@ const DeliveryInfoStep = ({
           </Radio.Group>
         </Form.Item>
 
-        {/* District */}
+        {/* Pathao Location Selector — City / Zone / Area */}
+        <PathaoLocationSelector
+          cityId={cityId}
+          zoneId={zoneId}
+          areaId={areaId}
+          onCityChange={onCityChange}
+          onZoneChange={onZoneChange}
+          onAreaChange={onAreaChange}
+          required={true}
+        />
+
+        {/* Delivery Address */}
+        <Form.Item
+          label="Delivery Address"
+          required
+          help="House/flat number, road, block, landmark etc."
+        >
+          <TextArea
+            placeholder="e.g., House 12, Road 5, Block B, Mirpur-10"
+            value={deliveryAddress}
+            onChange={(e) => onDeliveryAddressChange(e.target.value)}
+            rows={3}
+            size="large"
+          />
+        </Form.Item>
+
+        <Divider />
+
+        {/* Secondary Phone */}
         <Form.Item
           label={
             <span>
-              <EnvironmentOutlined /> District
+              <PhoneOutlined /> Secondary Phone
             </span>
           }
-          required
-          help="Enter the district name"
+          help="Optional - alternate contact number"
         >
           <Input
-            placeholder="e.g., Dhaka, Chittagong, Sylhet"
-            value={deliveryDistrict}
-            onChange={(e) => onDeliveryDistrictChange(e.target.value)}
+            placeholder="01XXXXXXXXX"
+            value={secondaryPhone}
+            onChange={(e) => onSecondaryPhoneChange(e.target.value)}
             size="large"
+            maxLength={15}
           />
         </Form.Item>
 
-        {/* Police Station */}
+        {/* Special Instructions */}
         <Form.Item
-          label="Police Station / Upazila"
-          required
-          help="Enter the police station or upazila name"
-        >
-          <Input
-            placeholder="e.g., Gulshan, Dhanmondi, Mirpur"
-            value={policeStation}
-            onChange={(e) => onPoliceStationChange(e.target.value)}
-            size="large"
-          />
-        </Form.Item>
-
-        {/* Area - OPTIONAL */}
-        <Form.Item
-          label="Area"
-          help="Optional - Enter specific area or locality"
-        >
-          <Input
-            placeholder="e.g., Gulshan 1, Banani DOHS"
-            value={deliveryArea}
-            onChange={(e) => onDeliveryAreaChange(e.target.value)}
-            size="large"
-          />
-        </Form.Item>
-
-        {/* Full Address - OPTIONAL */}
-        <Form.Item
-          label="Full Delivery Address"
-          help="Optional - House/flat number, road, block, etc."
+          label={
+            <span>
+              <InfoCircleOutlined /> Special Instructions
+            </span>
+          }
+          help="Optional - e.g., Call before delivery, Leave at gate"
         >
           <TextArea
-            placeholder="Enter complete address (optional)"
-            value={deliveryAddress}
-            onChange={(e) => onDeliveryAddressChange(e.target.value)}
-            rows={4}
+            placeholder="Enter any special instructions for delivery"
+            value={specialInstructions}
+            onChange={(e) => onSpecialInstructionsChange(e.target.value)}
+            rows={2}
             size="large"
           />
         </Form.Item>
 
-        {/* Delivery Charge - OPTIONAL with default */}
+        <Divider />
+
+        {/* Delivery Charge */}
         <Form.Item
           label="Delivery Charge (৳)"
-          help={`Optional - Default is ৳${defaultCharge} for ${
+          help={`Default is ৳${defaultCharge} for ${
             deliveryType === DeliveryLocation.INSIDE_DHAKA
               ? "Inside Dhaka"
               : "Outside Dhaka"
-          }`}
+          }. You can override this.`}
         >
-          <Input
-            type="number"
-            placeholder={`Default: ৳${defaultCharge}`}
-            value={deliveryCharge || ""}
-            onChange={(e) =>
-              onDeliveryChargeChange(Number(e.target.value) || defaultCharge)
-            }
-            size="large"
-            prefix="৳"
-            min={0}
-          />
+          <Row gutter={12} align="middle">
+            <Col>
+              <InputNumber
+                min={0}
+                step={1}
+                value={deliveryCharge}
+                onChange={(value) =>
+                  onDeliveryChargeChange(value ?? defaultCharge)
+                }
+                prefix="৳"
+                size="large"
+                style={{ width: 160 }}
+              />
+            </Col>
+            <Col>
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                Auto-calculated · Editable
+              </Text>
+            </Col>
+          </Row>
         </Form.Item>
       </Form>
     </div>

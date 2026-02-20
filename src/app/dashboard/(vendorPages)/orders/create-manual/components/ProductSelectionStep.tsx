@@ -15,6 +15,7 @@ import {
   PlusOutlined,
   DeleteOutlined,
   ShoppingOutlined,
+  TagOutlined,
 } from "@ant-design/icons";
 import { useGetAllProductsQuery } from "@/redux/api/productApi";
 import { IProduct, IProductVariant } from "@/types/product";
@@ -27,7 +28,8 @@ export interface OrderItem {
   productName: string;
   variantId?: string | null;
   variantSku?: string | null;
-  price: number;
+  originalPrice: number; // original price from product/variant
+  price: number; // actual price used (may be overridden by vendor)
   quantity: number;
   subtotal: number;
 }
@@ -50,51 +52,40 @@ const ProductSelectionStep = ({
     null,
   );
   const [quantity, setQuantity] = useState(1);
+  const [customPrice, setCustomPrice] = useState<number | null>(null);
   const [itemCounter, setItemCounter] = useState(0);
 
-  // Fetch products for the selected store
   const { data: productsResponse, isLoading } = useGetAllProductsQuery({
     storeId,
   });
-
   const products = (productsResponse?.products as IProduct[]) || [];
 
-  // Get selected product details
   const selectedProduct = products.find(
     (p: IProduct) => p.id === selectedProductId,
   );
   const hasVariants =
     selectedProduct?.variants && selectedProduct.variants.length > 0;
 
-  // Get price based on variant or product
   const getPrice = (): number => {
     if (!selectedProduct) return 0;
-
     if (hasVariants && selectedVariantId && selectedProduct.variants) {
       const variant = selectedProduct.variants.find(
         (v: IProductVariant) => v.id === selectedVariantId,
       );
-      return variant?.price || 0;
+      return Number(variant?.price || 0);
     }
-    return selectedProduct.basePrice || 0;
+    return Number(selectedProduct.basePrice || 0);
   };
 
-  // Get variant display name (using SKU since name doesn't exist)
-  const getVariantDisplay = (variant: IProductVariant): string => {
-    return variant.sku;
-  };
+  const getVariantDisplay = (variant: IProductVariant): string => variant.sku;
 
-  // Add item to order
   const handleAddItem = () => {
-    if (!selectedProductId || !selectedProduct) {
-      return;
-    }
+    if (!selectedProductId || !selectedProduct) return;
+    if (hasVariants && !selectedVariantId) return;
 
-    if (hasVariants && !selectedVariantId) {
-      return;
-    }
+    const originalPrice = getPrice();
+    const finalPrice = customPrice !== null ? customPrice : originalPrice;
 
-    const price = getPrice();
     const variantSku =
       hasVariants && selectedVariantId && selectedProduct.variants
         ? selectedProduct.variants.find(
@@ -108,9 +99,10 @@ const ProductSelectionStep = ({
       productName: selectedProduct.name,
       variantId: selectedVariantId,
       variantSku,
-      price,
+      originalPrice,
+      price: finalPrice,
       quantity,
-      subtotal: price * quantity,
+      subtotal: finalPrice * quantity,
     };
 
     onItemsChange([...items, newItem]);
@@ -120,17 +112,35 @@ const ProductSelectionStep = ({
     setSelectedProductId(null);
     setSelectedVariantId(null);
     setQuantity(1);
+    setCustomPrice(null);
   };
 
-  // Remove item from order
   const handleRemoveItem = (itemId: string) => {
     onItemsChange(items.filter((item) => item.id !== itemId));
   };
 
-  // Calculate total
+  // Update price of an existing item in the list (vendor override)
+  const handlePriceChange = (itemId: string, newPrice: number | null) => {
+    const updated = items.map((item) => {
+      if (item.id !== itemId) return item;
+      const price = newPrice ?? item.originalPrice;
+      return { ...item, price, subtotal: price * item.quantity };
+    });
+    onItemsChange(updated);
+  };
+
+  // Update quantity of an existing item in the list
+  const handleQuantityChange = (itemId: string, newQuantity: number | null) => {
+    const updated = items.map((item) => {
+      if (item.id !== itemId) return item;
+      const qty = newQuantity ?? 1;
+      return { ...item, quantity: qty, subtotal: item.price * qty };
+    });
+    onItemsChange(updated);
+  };
+
   const totalAmount = items.reduce((sum, item) => sum + item.subtotal, 0);
 
-  // Table columns
   const columns = [
     {
       title: "Product",
@@ -147,46 +157,74 @@ const ProductSelectionStep = ({
       ),
     },
     {
-      title: "Price",
+      title: "Price (৳)",
       key: "price",
-      width: 120,
-      render: (_: unknown, record: OrderItem) =>
-        `৳${Number(record.price).toFixed(2)}`,
+      width: 150,
+      render: (_: unknown, record: OrderItem) => (
+        <InputNumber
+          min={0}
+          step={1}
+          value={record.price}
+          onChange={(value) => handlePriceChange(record.id, value)}
+          prefix="৳"
+          style={{ width: "100%" }}
+          title={
+            record.price !== record.originalPrice
+              ? `Original: ৳${record.originalPrice.toFixed(2)}`
+              : undefined
+          }
+        />
+      ),
     },
     {
-      title: "Quantity",
+      title: "Qty",
       key: "quantity",
       width: 100,
-      render: (_: unknown, record: OrderItem) => record.quantity,
+      render: (_: unknown, record: OrderItem) => (
+        <InputNumber
+          min={1}
+          max={1000}
+          value={record.quantity}
+          onChange={(value) => handleQuantityChange(record.id, value)}
+          style={{ width: "100%" }}
+        />
+      ),
     },
     {
       title: "Subtotal",
       key: "subtotal",
       width: 120,
       render: (_: unknown, record: OrderItem) => (
-        <Text strong>৳{Number(record.subtotal).toFixed(2)}</Text>
+        <div>
+          <Text strong>৳{Number(record.subtotal).toFixed(2)}</Text>
+          {record.price !== record.originalPrice && (
+            <div>
+              <Text type="danger" style={{ fontSize: 11 }}>
+                Original: ৳{record.originalPrice.toFixed(2)}
+              </Text>
+            </div>
+          )}
+        </div>
       ),
     },
     {
       title: "Action",
       key: "action",
-      width: 100,
+      width: 80,
       render: (_: unknown, record: OrderItem) => (
         <Button
-          type="link"
+          type="text"
           danger
           icon={<DeleteOutlined />}
           onClick={() => handleRemoveItem(record.id)}
-        >
-          Remove
-        </Button>
+        />
       ),
     },
   ];
 
-  if (isLoading) {
-    return <Spin size="large" />;
-  }
+  if (isLoading) return <Spin size="large" />;
+
+  const defaultPrice = getPrice();
 
   return (
     <div>
@@ -208,6 +246,7 @@ const ProductSelectionStep = ({
               onChange={(value) => {
                 setSelectedProductId(value);
                 setSelectedVariantId(null);
+                setCustomPrice(null);
               }}
               size="large"
               showSearch
@@ -215,29 +254,55 @@ const ProductSelectionStep = ({
             >
               {products.map((product: IProduct) => (
                 <Select.Option key={product.id} value={product.id}>
-                  {product.name} - ৳{Number(product.basePrice).toFixed(2)}
+                  {product.name} — ৳{Number(product.basePrice).toFixed(2)}
                 </Select.Option>
               ))}
             </Select>
           </Form.Item>
 
-          {/* Variant Selector (if product has variants) */}
+          {/* Variant Selector */}
           {hasVariants && selectedProduct && selectedProduct.variants && (
             <Form.Item label="Select Variant" required>
               <Select
                 placeholder="Select a variant"
                 value={selectedVariantId}
-                onChange={setSelectedVariantId}
+                onChange={(value) => {
+                  setSelectedVariantId(value);
+                  setCustomPrice(null);
+                }}
                 size="large"
                 style={{ width: "100%" }}
               >
                 {selectedProduct.variants.map((variant: IProductVariant) => (
                   <Select.Option key={variant.id} value={variant.id}>
-                    {getVariantDisplay(variant)} - ৳
+                    {getVariantDisplay(variant)} — ৳
                     {Number(variant.price).toFixed(2)}
                   </Select.Option>
                 ))}
               </Select>
+            </Form.Item>
+          )}
+
+          {/* Custom Price Override */}
+          {selectedProductId && (
+            <Form.Item
+              label={
+                <span>
+                  <TagOutlined /> Custom Price (optional — leave blank to use
+                  default ৳{defaultPrice.toFixed(2)})
+                </span>
+              }
+            >
+              <InputNumber
+                min={0}
+                step={1}
+                value={customPrice}
+                onChange={(value) => setCustomPrice(value)}
+                placeholder={`Default: ৳${defaultPrice.toFixed(2)}`}
+                prefix="৳"
+                size="large"
+                style={{ width: 200 }}
+              />
             </Form.Item>
           )}
 
@@ -280,9 +345,8 @@ const ProductSelectionStep = ({
               pagination={false}
               scroll={{ x: 600 }}
               style={{ marginTop: 16 }}
+              size="small"
             />
-
-            {/* Total */}
             <div
               style={{
                 marginTop: 16,
@@ -293,7 +357,7 @@ const ProductSelectionStep = ({
               }}
             >
               <Text strong style={{ fontSize: 18 }}>
-                Total: ৳{totalAmount.toFixed(2)}
+                Items Total: ৳{totalAmount.toFixed(2)}
               </Text>
             </div>
           </>

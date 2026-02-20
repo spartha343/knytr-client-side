@@ -6,7 +6,7 @@ import { Card, Steps, Button, Space, message } from "antd";
 import { ArrowLeftOutlined } from "@ant-design/icons";
 import ActionBar from "@/components/ui/ActionBar";
 import { useGetMyStoresQuery } from "@/redux/api/storeApi";
-import { useCreateOrderMutation } from "@/redux/api/orderApi";
+import { useCreateManualOrderMutation } from "@/redux/api/orderApi";
 import { DeliveryLocation, PaymentMethod } from "@/types/order";
 import { IStore } from "@/types/store";
 import StoreSelectionStep from "./components/StoreSelectionStep";
@@ -35,11 +35,16 @@ const CreateManualOrderPage = () => {
   const [deliveryType, setDeliveryType] = useState<DeliveryLocation>(
     DeliveryLocation.INSIDE_DHAKA,
   );
-  const [deliveryDistrict, setDeliveryDistrict] = useState("");
-  const [policeStation, setPoliceStation] = useState("");
-  const [deliveryArea, setDeliveryArea] = useState("");
+  const [cityId, setCityId] = useState<number | null>(null);
+  const [zoneId, setZoneId] = useState<number | null>(null);
+  const [areaId, setAreaId] = useState<number | null>(null);
+  const [cityName, setCityName] = useState("");
+  const [zoneName, setZoneName] = useState("");
+  const [areaName, setAreaName] = useState("");
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [deliveryCharge, setDeliveryCharge] = useState<number>(70);
+  const [secondaryPhone, setSecondaryPhone] = useState("");
+  const [specialInstructions, setSpecialInstructions] = useState("");
 
   // Step 5: Payment
   const [paymentMethod] = useState<PaymentMethod>(PaymentMethod.COD);
@@ -50,44 +55,49 @@ const CreateManualOrderPage = () => {
   const selectedStore = stores.find((s) => s.id === selectedStoreId);
 
   // Create order mutation
-  const [createOrder, { isLoading: isCreating }] = useCreateOrderMutation();
+  const [createOrder, { isLoading: isCreating }] =
+    useCreateManualOrderMutation();
 
   const steps = [
-    {
-      title: "Store",
-      content: "Select store",
-    },
-    {
-      title: "Customer",
-      content: "Customer info",
-    },
-    {
-      title: "Products",
-      content: "Add products",
-    },
-    {
-      title: "Delivery",
-      content: "Delivery details",
-    },
-    {
-      title: "Review",
-      content: "Review & submit",
-    },
+    { title: "Store", content: "Select store" },
+    { title: "Customer", content: "Customer info" },
+    { title: "Products", content: "Add products" },
+    { title: "Delivery", content: "Delivery details" },
+    { title: "Review", content: "Review & submit" },
   ];
 
-  // Handle delivery type change with automatic charge update
+  // Handlers for city/zone/area — store both ID and name
+  const handleCityChange = (id: number | null, name: string) => {
+    setCityId(id);
+    setCityName(name);
+    // Reset downstream
+    setZoneId(null);
+    setZoneName("");
+    setAreaId(null);
+    setAreaName("");
+  };
+
+  const handleZoneChange = (id: number | null, name: string) => {
+    setZoneId(id);
+    setZoneName(name);
+    // Reset downstream
+    setAreaId(null);
+    setAreaName("");
+  };
+
+  const handleAreaChange = (id: number | null, name: string) => {
+    setAreaId(id);
+    setAreaName(name);
+  };
+
   const handleDeliveryTypeChange = (newType: DeliveryLocation) => {
     setDeliveryType(newType);
-    // Auto-update delivery charge to default if it's currently a default value
     if (deliveryCharge === 70 || deliveryCharge === 120) {
-      const defaultCharge =
-        newType === DeliveryLocation.INSIDE_DHAKA ? 70 : 120;
-      setDeliveryCharge(defaultCharge);
+      setDeliveryCharge(newType === DeliveryLocation.INSIDE_DHAKA ? 70 : 120);
     }
   };
 
   const handleNext = () => {
-    // Validate each step
     if (currentStep === 0 && !selectedStoreId) {
       message.error("Please select a store");
       return;
@@ -103,8 +113,12 @@ const CreateManualOrderPage = () => {
       return;
     }
     if (currentStep === 3) {
-      if (!deliveryDistrict || !policeStation) {
-        message.error("Please fill in required delivery fields");
+      if (!cityId || !zoneId || !areaId) {
+        message.error("Please select City, Zone and Area for delivery");
+        return;
+      }
+      if (!deliveryAddress.trim()) {
+        message.error("Please enter a delivery address");
         return;
       }
     }
@@ -127,16 +141,20 @@ const CreateManualOrderPage = () => {
         customerPhone,
         customerName: customerName || undefined,
         customerEmail: customerEmail || undefined,
+        secondaryPhone: secondaryPhone || undefined,
+        specialInstructions: specialInstructions || undefined,
         items: items.map((item) => ({
           productId: item.productId,
           variantId: item.variantId || undefined,
           quantity: item.quantity,
+          unitPrice: item.price,
         })),
         deliveryLocation: deliveryType,
-        deliveryDistrict,
-        policeStation,
-        deliveryArea: deliveryArea || undefined,
+        recipientCityId: cityId!,
+        recipientZoneId: zoneId!,
+        recipientAreaId: areaId!,
         deliveryAddress: deliveryAddress || undefined,
+        deliveryCharge,
         paymentMethod,
       };
       await createOrder(orderData).unwrap();
@@ -180,17 +198,21 @@ const CreateManualOrderPage = () => {
         return (
           <DeliveryInfoStep
             deliveryType={deliveryType}
-            deliveryDistrict={deliveryDistrict}
-            policeStation={policeStation}
-            deliveryArea={deliveryArea}
+            cityId={cityId}
+            zoneId={zoneId}
+            areaId={areaId}
             deliveryAddress={deliveryAddress}
             deliveryCharge={deliveryCharge}
-            onDeliveryTypeChange={handleDeliveryTypeChange} // Changed to use handler
-            onDeliveryDistrictChange={setDeliveryDistrict}
-            onPoliceStationChange={setPoliceStation}
-            onDeliveryAreaChange={setDeliveryArea}
+            secondaryPhone={secondaryPhone}
+            specialInstructions={specialInstructions}
+            onDeliveryTypeChange={handleDeliveryTypeChange}
+            onCityChange={handleCityChange}
+            onZoneChange={handleZoneChange}
+            onAreaChange={handleAreaChange}
             onDeliveryAddressChange={setDeliveryAddress}
             onDeliveryChargeChange={setDeliveryCharge}
+            onSecondaryPhoneChange={setSecondaryPhone}
+            onSpecialInstructionsChange={setSpecialInstructions}
           />
         );
       case 4:
@@ -200,13 +222,15 @@ const CreateManualOrderPage = () => {
             customerPhone={customerPhone}
             customerName={customerName}
             customerEmail={customerEmail}
+            secondaryPhone={secondaryPhone}
             items={items}
             deliveryType={deliveryType}
-            deliveryDistrict={deliveryDistrict}
-            policeStation={policeStation}
-            deliveryArea={deliveryArea}
+            cityName={cityName}
+            zoneName={zoneName}
+            areaName={areaName}
             deliveryAddress={deliveryAddress}
             deliveryCharge={deliveryCharge}
+            specialInstructions={specialInstructions}
             paymentMethod={paymentMethod}
           />
         );

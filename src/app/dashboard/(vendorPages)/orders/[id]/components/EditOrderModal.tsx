@@ -150,7 +150,7 @@ export default function EditOrderModal({
 
     // Otherwise calculate based on location
     if (deliveryLocation === DeliveryLocation.INSIDE_DHAKA) {
-      return 60;
+      return 70;
     } else if (deliveryLocation === DeliveryLocation.OUTSIDE_DHAKA) {
       return 120;
     }
@@ -452,9 +452,9 @@ export default function EditOrderModal({
           cityId={cityId}
           zoneId={zoneId}
           areaId={areaId}
-          onCityChange={setCityId}
-          onZoneChange={setZoneId}
-          onAreaChange={setAreaId}
+          onCityChange={(id) => setCityId(id)}
+          onZoneChange={(id) => setZoneId(id)}
+          onAreaChange={(id) => setAreaId(id)}
         />
 
         <Form.Item name="specialInstructions" label="Special Instructions">
