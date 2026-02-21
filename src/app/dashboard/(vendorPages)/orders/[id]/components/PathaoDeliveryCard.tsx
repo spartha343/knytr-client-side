@@ -1,7 +1,20 @@
 "use client";
 
-import { Card, Descriptions, Tag, Alert } from "antd";
-import { RocketOutlined, CheckCircleOutlined } from "@ant-design/icons";
+import {
+  Card,
+  Descriptions,
+  Tag,
+  Alert,
+  Button,
+  message,
+  Popconfirm,
+} from "antd";
+import {
+  RocketOutlined,
+  CheckCircleOutlined,
+  ReloadOutlined,
+} from "@ant-design/icons";
+import { useRetryDeliveryMutation } from "@/redux/api/pathaoApi";
 
 interface PathaoDeliveryCardProps {
   delivery: {
@@ -20,9 +33,18 @@ const getDeliveryStatusColor = (status: string) => {
     CREATED: "cyan",
     PENDING: "orange",
     PICKUP_REQUESTED: "gold",
+    ASSIGNED_FOR_PICKUP: "lime",
     PICKED_UP: "geekblue",
+    AT_SORTING_HUB: "purple",
     IN_TRANSIT: "purple",
+    RECEIVED_AT_LAST_MILE: "geekblue",
+    ASSIGNED_FOR_DELIVERY: "blue",
     DELIVERED: "green",
+    PARTIAL_DELIVERY: "gold",
+    RETURNED: "volcano",
+    DELIVERY_FAILED: "red",
+    PICKUP_FAILED: "red",
+    ON_HOLD: "orange",
     CANCELLED: "red",
     FAILED: "red",
   };
@@ -31,6 +53,26 @@ const getDeliveryStatusColor = (status: string) => {
 
 const PathaoDeliveryCard = ({ delivery }: PathaoDeliveryCardProps) => {
   const isDelivered = delivery.status === "DELIVERED";
+  const isFailed = delivery.status === "FAILED";
+  const isPickupFailed = delivery.status === "PICKUP_FAILED";
+  const isDeliveryFailed = delivery.status === "DELIVERY_FAILED";
+  const canRetry = isFailed || isPickupFailed || isDeliveryFailed;
+
+  const [retryDelivery, { isLoading: isRetrying }] = useRetryDeliveryMutation();
+
+  const handleRetry = async () => {
+    try {
+      await retryDelivery(delivery.id).unwrap();
+      message.success("Delivery retry initiated successfully");
+    } catch (error: unknown) {
+      const errMsg =
+        error instanceof Error
+          ? error.message
+          : ((error as { data?: { message?: string } })?.data?.message ??
+            "Failed to retry delivery");
+      message.error(errMsg);
+    }
+  };
 
   return (
     <Card
@@ -38,6 +80,27 @@ const PathaoDeliveryCard = ({ delivery }: PathaoDeliveryCardProps) => {
         <span>
           <RocketOutlined /> Pathao Delivery Information
         </span>
+      }
+      extra={
+        canRetry && (
+          <Popconfirm
+            title="Retry Delivery"
+            description="Are you sure you want to retry this delivery?"
+            onConfirm={handleRetry}
+            okText="Yes, Retry"
+            cancelText="Cancel"
+          >
+            <Button
+              type="primary"
+              danger
+              size="small"
+              icon={<ReloadOutlined />}
+              loading={isRetrying}
+            >
+              Retry
+            </Button>
+          </Popconfirm>
+        )
       }
       style={{ marginBottom: 16 }}
     >
@@ -48,6 +111,16 @@ const PathaoDeliveryCard = ({ delivery }: PathaoDeliveryCardProps) => {
           type="success"
           showIcon
           icon={<CheckCircleOutlined />}
+          style={{ marginBottom: 16 }}
+        />
+      )}
+
+      {canRetry && (
+        <Alert
+          title="Delivery Failed"
+          description="This delivery encountered an issue. You can retry up to 3 times."
+          type="error"
+          showIcon
           style={{ marginBottom: 16 }}
         />
       )}

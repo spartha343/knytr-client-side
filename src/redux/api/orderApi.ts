@@ -7,6 +7,8 @@ import type {
   IUpdateOrderStatusInput,
   IAssignBranchInput,
   ICancelOrderInput,
+  ICreateManualOrderInput,
+  IOrder,
 } from "@/types/order";
 
 const ORDER_URL = "/orders";
@@ -147,9 +149,8 @@ export const orderApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: [tagTypes.order],
     }),
-    createManualOrder: build.mutation({
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      query: (data: any) => ({
+    createManualOrder: build.mutation<IOrder[], ICreateManualOrderInput>({
+      query: (data: ICreateManualOrderInput) => ({
         url: `${ORDER_URL}/manual`,
         method: "POST",
         data,

@@ -1,5 +1,11 @@
 import { tagTypes } from "../tag-types";
 import { baseApi } from "./baseApi";
+import type {
+  IPathaoCity,
+  IPathaoZone,
+  IPathaoArea,
+  IPathaoCredentials,
+} from "@/types/pathao";
 
 const PATHAO_URL = "/pathao";
 
@@ -8,30 +14,30 @@ export const pathaoApi = baseApi.injectEndpoints({
     // Get all cities
     getCities: build.query({
       query: () => ({
-        url: `${PATHAO_URL}/cities`, // ✅ Correct
+        url: `${PATHAO_URL}/cities`,
         method: "GET",
       }),
-      transformResponse: (response: { data: unknown }) => response.data,
+      transformResponse: (response: { data: IPathaoCity[] }) => response.data,
       providesTags: [tagTypes.pathao],
     }),
 
     // Get zones for a city
     getZones: build.query({
       query: (cityId: number) => ({
-        url: `${PATHAO_URL}/zones/${cityId}`, // ✅ Correct
+        url: `${PATHAO_URL}/zones/${cityId}`,
         method: "GET",
       }),
-      transformResponse: (response: { data: unknown }) => response.data,
+      transformResponse: (response: { data: IPathaoZone[] }) => response.data,
       providesTags: [tagTypes.pathao],
     }),
 
     // Get areas for a zone
     getAreas: build.query({
       query: (zoneId: number) => ({
-        url: `${PATHAO_URL}/areas/${zoneId}`, // ✅ Correct
+        url: `${PATHAO_URL}/areas/${zoneId}`,
         method: "GET",
       }),
-      transformResponse: (response: { data: unknown }) => response.data,
+      transformResponse: (response: { data: IPathaoArea[] }) => response.data,
       providesTags: [tagTypes.pathao],
     }),
 
@@ -94,13 +100,23 @@ export const pathaoApi = baseApi.injectEndpoints({
     }),
 
     // Get credentials by branch ID (Vendor)
-    getCredentialsByBranch: build.query({
+    getCredentialsByBranch: build.query<IPathaoCredentials, string>({
       query: (branchId: string) => ({
         url: `${PATHAO_URL}/credentials/${branchId}`,
         method: "GET",
       }),
-      transformResponse: (response: { data: unknown }) => response.data,
+      transformResponse: (response: { data: IPathaoCredentials }) =>
+        response.data,
       providesTags: [tagTypes.pathao],
+    }),
+
+    // Retry failed delivery
+    retryDelivery: build.mutation({
+      query: (deliveryId: string) => ({
+        url: `${PATHAO_URL}/deliveries/${deliveryId}/retry`,
+        method: "POST",
+      }),
+      invalidatesTags: [tagTypes.order, tagTypes.pathao],
     }),
   }),
 });
@@ -113,4 +129,5 @@ export const {
   useSaveCredentialsMutation,
   useGetCredentialsByBranchQuery,
   useRegisterStoreMutation,
+  useRetryDeliveryMutation,
 } = pathaoApi;

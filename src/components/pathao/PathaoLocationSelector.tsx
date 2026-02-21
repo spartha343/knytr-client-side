@@ -67,7 +67,7 @@ const PathaoLocationSelector = ({
       <Form.Item
         label={
           <span>
-            <EnvironmentOutlined /> City
+            <EnvironmentOutlined /> City ( জেলা )
           </span>
         }
         required={required}
@@ -95,7 +95,7 @@ const PathaoLocationSelector = ({
       <Form.Item
         label={
           <span>
-            <EnvironmentOutlined /> Zone
+            <EnvironmentOutlined /> Zone ( থানা )
           </span>
         }
         required={required}
@@ -123,7 +123,7 @@ const PathaoLocationSelector = ({
       <Form.Item
         label={
           <span>
-            <EnvironmentOutlined /> Area
+            <EnvironmentOutlined /> Area(এলাকা)
           </span>
         }
         required={required}

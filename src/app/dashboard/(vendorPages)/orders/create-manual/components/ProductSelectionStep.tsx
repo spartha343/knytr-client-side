@@ -19,25 +19,14 @@ import {
 } from "@ant-design/icons";
 import { useGetAllProductsQuery } from "@/redux/api/productApi";
 import { IProduct, IProductVariant } from "@/types/product";
+import type { IManualOrderWizardItem } from "@/types/order";
 
 const { Text } = Typography;
 
-export interface OrderItem {
-  id: string;
-  productId: string;
-  productName: string;
-  variantId?: string | null;
-  variantSku?: string | null;
-  originalPrice: number; // original price from product/variant
-  price: number; // actual price used (may be overridden by vendor)
-  quantity: number;
-  subtotal: number;
-}
-
 interface ProductSelectionStepProps {
   storeId: string;
-  items: OrderItem[];
-  onItemsChange: (items: OrderItem[]) => void;
+  items: IManualOrderWizardItem[];
+  onItemsChange: (items: IManualOrderWizardItem[]) => void;
 }
 
 const ProductSelectionStep = ({
@@ -93,7 +82,7 @@ const ProductSelectionStep = ({
           )?.sku
         : null;
 
-    const newItem: OrderItem = {
+    const newItem: IManualOrderWizardItem = {
       id: `${selectedProductId}-${selectedVariantId || "base"}-${itemCounter}`,
       productId: selectedProductId,
       productName: selectedProduct.name,
@@ -145,7 +134,7 @@ const ProductSelectionStep = ({
     {
       title: "Product",
       key: "product",
-      render: (_: unknown, record: OrderItem) => (
+      render: (_: unknown, record: IManualOrderWizardItem) => (
         <div>
           <div style={{ fontWeight: 500 }}>{record.productName}</div>
           {record.variantSku && (
@@ -160,7 +149,7 @@ const ProductSelectionStep = ({
       title: "Price (৳)",
       key: "price",
       width: 150,
-      render: (_: unknown, record: OrderItem) => (
+      render: (_: unknown, record: IManualOrderWizardItem) => (
         <InputNumber
           min={0}
           step={1}
@@ -180,7 +169,7 @@ const ProductSelectionStep = ({
       title: "Qty",
       key: "quantity",
       width: 100,
-      render: (_: unknown, record: OrderItem) => (
+      render: (_: unknown, record: IManualOrderWizardItem) => (
         <InputNumber
           min={1}
           max={1000}
@@ -194,7 +183,7 @@ const ProductSelectionStep = ({
       title: "Subtotal",
       key: "subtotal",
       width: 120,
-      render: (_: unknown, record: OrderItem) => (
+      render: (_: unknown, record: IManualOrderWizardItem) => (
         <div>
           <Text strong>৳{Number(record.subtotal).toFixed(2)}</Text>
           {record.price !== record.originalPrice && (
@@ -211,7 +200,7 @@ const ProductSelectionStep = ({
       title: "Action",
       key: "action",
       width: 80,
-      render: (_: unknown, record: OrderItem) => (
+      render: (_: unknown, record: IManualOrderWizardItem) => (
         <Button
           type="text"
           danger

@@ -33,14 +33,8 @@ const CancelOrderModal = ({
       }).unwrap();
 
       message.success("Order cancelled successfully");
-
       // Close modal
       onClose();
-
-      // Refresh page to show updated status
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
     } catch (error) {
       const err = error as { data?: { message?: string } };
       message.error(

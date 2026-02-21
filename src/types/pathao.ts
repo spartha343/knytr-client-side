@@ -1,22 +1,30 @@
 export interface IPathaoCity {
+  id: string;
   cityId: number;
   name: string;
+  isActive: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface IPathaoZone {
+  id: string;
   zoneId: number;
   cityId: number;
   name: string;
+  isActive: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface IPathaoArea {
+  id: string;
   areaId: number;
   zoneId: number;
   name: string;
+  homeDeliveryAvailable: boolean;
+  pickupAvailable: boolean;
+  isActive: boolean;
   createdAt: string;
   updatedAt: string;
 }

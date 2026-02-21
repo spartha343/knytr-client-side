@@ -184,3 +184,42 @@ export interface IOrderActivity {
     firebaseUid: string;
   } | null;
 }
+
+// Manual order item (vendor-side, with price override)
+export interface IManualOrderItem {
+  productId: string;
+  variantId?: string;
+  quantity: number;
+  unitPrice: number;
+}
+
+// Manual order creation input (vendor creates directly as CONFIRMED)
+export interface ICreateManualOrderInput {
+  storeId: string;
+  customerPhone: string;
+  customerName?: string;
+  customerEmail?: string;
+  secondaryPhone?: string;
+  specialInstructions?: string;
+  items: IManualOrderItem[];
+  deliveryLocation: DeliveryLocation;
+  recipientCityId: number;
+  recipientZoneId: number;
+  recipientAreaId: number;
+  deliveryAddress?: string;
+  deliveryCharge: number;
+  paymentMethod?: PaymentMethod;
+}
+
+// UI-only type for the order item used in the manual order wizard
+export interface IManualOrderWizardItem {
+  id: string;
+  productId: string;
+  productName: string;
+  variantId?: string | null;
+  variantSku?: string | null;
+  originalPrice: number;
+  price: number;
+  quantity: number;
+  subtotal: number;
+}

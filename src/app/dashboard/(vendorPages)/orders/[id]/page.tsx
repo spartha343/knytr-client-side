@@ -169,10 +169,7 @@ const VendorOrderDetailPage = () => {
         currentZoneId={order.recipientZoneId}
         currentAreaId={order.recipientAreaId}
         onClose={() => setIsPathaoModalOpen(false)}
-        onSuccess={() => {
-          // Refresh order data after successful booking
-          window.location.reload();
-        }}
+        onSuccess={() => setIsPathaoModalOpen(false)}
       />
 
       {/* Edit Order Modal */}
@@ -180,10 +177,7 @@ const VendorOrderDetailPage = () => {
         isOpen={isEditModalOpen}
         order={order}
         onClose={() => setIsEditModalOpen(false)}
-        onSuccess={() => {
-          // Refresh order data after successful update
-          window.location.reload();
-        }}
+        onSuccess={() => setIsEditModalOpen(false)}
       />
     </div>
   );

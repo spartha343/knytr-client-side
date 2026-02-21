@@ -115,9 +115,9 @@ const BookPathaoDeliveryModal = ({
           cityId={cityId}
           zoneId={zoneId}
           areaId={areaId}
-          onCityChange={setCityId}
-          onZoneChange={setZoneId}
-          onAreaChange={setAreaId}
+          onCityChange={(id) => setCityId(id)}
+          onZoneChange={(id) => setZoneId(id)}
+          onAreaChange={(id) => setAreaId(id)}
           disabled={isLoading}
           required
         />

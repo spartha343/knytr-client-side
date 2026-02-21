@@ -14,7 +14,10 @@ import CustomerInfoStep from "./components/CustomerInfoStep";
 import ProductSelectionStep from "./components/ProductSelectionStep";
 import DeliveryInfoStep from "./components/DeliveryInfoStep";
 import ReviewStep from "./components/ReviewStep";
-import { OrderItem } from "./components/ProductSelectionStep";
+import type {
+  ICreateManualOrderInput,
+  IManualOrderWizardItem,
+} from "@/types/order";
 
 const CreateManualOrderPage = () => {
   const router = useRouter();
@@ -29,7 +32,7 @@ const CreateManualOrderPage = () => {
   const [customerEmail, setCustomerEmail] = useState("");
 
   // Step 3: Products
-  const [items, setItems] = useState<OrderItem[]>([]);
+  const [items, setItems] = useState<IManualOrderWizardItem[]>([]);
 
   // Step 4: Delivery
   const [deliveryType, setDeliveryType] = useState<DeliveryLocation>(
@@ -136,7 +139,7 @@ const CreateManualOrderPage = () => {
 
   const handleCreateOrder = async () => {
     try {
-      const orderData = {
+      const orderData: ICreateManualOrderInput = {
         storeId: selectedStoreId!,
         customerPhone,
         customerName: customerName || undefined,

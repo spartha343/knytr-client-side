@@ -19,6 +19,7 @@ import {
   useGetAreasQuery,
   useRegisterStoreMutation,
 } from "@/redux/api/pathaoApi";
+import type { IPathaoCity, IPathaoZone, IPathaoArea } from "@/types/pathao";
 
 const { Title, Paragraph, Text } = Typography;
 const { TextArea } = Input;
@@ -33,33 +34,11 @@ interface StoreRegistrationValues {
   contactName: string;
   contactNumber: string;
   secondaryContact?: string;
+  otpNumber?: string;
   address: string;
   cityId: number;
   zoneId: number;
   areaId: number;
-}
-
-interface PathaoCity {
-  id: string;
-  cityId: number;
-  name: string;
-  isActive: boolean;
-}
-
-interface PathaoZone {
-  id: string;
-  zoneId: number;
-  name: string;
-  isActive: boolean;
-}
-
-interface PathaoArea {
-  id: string;
-  areaId: number;
-  name: string;
-  pickupAvailable: boolean;
-  homeDeliveryAvailable: boolean;
-  isActive: boolean;
 }
 
 export default function StoreRegistrationForm({ branchId, onSuccess }: Props) {
@@ -111,9 +90,9 @@ export default function StoreRegistrationForm({ branchId, onSuccess }: Props) {
     }
   };
 
-  const cities = (citiesData as PathaoCity[]) || [];
-  const zones = (zonesData as PathaoZone[]) || [];
-  const areas = (areasData as PathaoArea[]) || [];
+  const cities = citiesData || [];
+  const zones = zonesData || [];
+  const areas = areasData || [];
 
   return (
     <div>
@@ -210,12 +189,26 @@ registering a store."
             </Form.Item>
 
             <Form.Item
+              label="OTP Number (Optional)"
+              name="otpNumber"
+              rules={[
+                {
+                  pattern: /^01[0-9]{9}$/,
+                  message: "Must be a valid 11-digit BD number",
+                },
+              ]}
+              tooltip="OTP verification codes for orders from this store will be sent to this number"
+            >
+              <Input placeholder="01XXXXXXXXX" maxLength={11} />
+            </Form.Item>
+
+            <Form.Item
               label="Pickup Address"
               name="address"
               rules={[
                 { required: true, message: "Address is required" },
                 { min: 15, message: "Address must be at least 15 characters" },
-                { max: 220, message: "Address must not exceed 220 characters" },
+                { max: 120, message: "Address must not exceed 120 characters" },
               ]}
               tooltip="Complete address where Pathao will pick up orders"
             >
@@ -223,7 +216,7 @@ registering a store."
                 rows={3}
                 placeholder="House/Building, Road, Area, City with postal code"
                 showCount
-                maxLength={220}
+                maxLength={120}
               />
             </Form.Item>
 
@@ -244,7 +237,7 @@ registering a store."
                 showSearch
                 optionFilterProp="children"
               >
-                {cities.map((city: PathaoCity) => (
+                {cities.map((city: IPathaoCity) => (
                   <Select.Option key={city.id} value={city.cityId}>
                     {city.name}
                   </Select.Option>
@@ -265,7 +258,7 @@ registering a store."
                 showSearch
                 optionFilterProp="children"
               >
-                {zones.map((zone: PathaoZone) => (
+                {zones.map((zone: IPathaoZone) => (
                   <Select.Option key={zone.id} value={zone.zoneId}>
                     {zone.name}
                   </Select.Option>
@@ -285,7 +278,7 @@ registering a store."
                 showSearch
                 optionFilterProp="children"
               >
-                {areas.map((area: PathaoArea) => (
+                {areas.map((area: IPathaoArea) => (
                   <Select.Option key={area.id} value={area.areaId}>
                     {area.name}
                     {!area.pickupAvailable && (

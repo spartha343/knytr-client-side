@@ -2,7 +2,7 @@
 
 import { Card, Descriptions, Table, Typography, Tag } from "antd";
 import { DeliveryLocation, PaymentMethod } from "@/types/order";
-import { OrderItem } from "./ProductSelectionStep";
+import type { IManualOrderWizardItem } from "@/types/order";
 
 const { Text, Title } = Typography;
 
@@ -12,7 +12,7 @@ interface ReviewStepProps {
   customerName: string;
   customerEmail: string;
   secondaryPhone: string;
-  items: OrderItem[];
+  items: IManualOrderWizardItem[];
   deliveryType: DeliveryLocation;
   cityName: string;
   zoneName: string;
@@ -46,7 +46,7 @@ const ReviewStep = ({
     {
       title: "Product",
       key: "product",
-      render: (_: unknown, record: OrderItem) => (
+      render: (_: unknown, record: IManualOrderWizardItem) => (
         <div>
           <div style={{ fontWeight: 500 }}>{record.productName}</div>
           {record.variantSku && (
@@ -61,20 +61,20 @@ const ReviewStep = ({
       title: "Price",
       key: "price",
       width: 100,
-      render: (_: unknown, record: OrderItem) =>
+      render: (_: unknown, record: IManualOrderWizardItem) =>
         `৳${Number(record.price).toFixed(2)}`,
     },
     {
       title: "Qty",
       key: "quantity",
       width: 60,
-      render: (_: unknown, record: OrderItem) => record.quantity,
+      render: (_: unknown, record: IManualOrderWizardItem) => record.quantity,
     },
     {
       title: "Subtotal",
       key: "subtotal",
       width: 120,
-      render: (_: unknown, record: OrderItem) => (
+      render: (_: unknown, record: IManualOrderWizardItem) => (
         <Text strong>৳{Number(record.subtotal).toFixed(2)}</Text>
       ),
     },
