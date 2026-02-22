@@ -92,6 +92,11 @@ export interface IOrder {
     status: string;
     deliveryFee?: number | null;
     createdAt: string;
+    statusHistory?: {
+      id: string;
+      status: string;
+      createdAt: string;
+    }[];
   } | null;
   status: OrderStatus;
   paymentMethod: PaymentMethod;

@@ -11,13 +11,20 @@ import {
   Typography,
   Space,
   Alert,
+  Spin,
+  Tag,
 } from "antd";
-import { ShopOutlined, EnvironmentOutlined } from "@ant-design/icons";
+import {
+  ShopOutlined,
+  EnvironmentOutlined,
+  CheckCircleOutlined,
+} from "@ant-design/icons";
 import {
   useGetCitiesQuery,
   useGetZonesQuery,
   useGetAreasQuery,
   useRegisterStoreMutation,
+  useGetStoreByBranchQuery,
 } from "@/redux/api/pathaoApi";
 import type { IPathaoCity, IPathaoZone, IPathaoArea } from "@/types/pathao";
 
@@ -43,19 +50,29 @@ interface StoreRegistrationValues {
 
 export default function StoreRegistrationForm({ branchId, onSuccess }: Props) {
   const [form] = Form.useForm();
+
+  // Fetch existing store
+  const { data: existingStoreData, isLoading: loadingStore } =
+    useGetStoreByBranchQuery(branchId);
+  const existingStore = existingStoreData?.data ?? null;
+
   const [selectedCityId, setSelectedCityId] = useState<number | null>(null);
   const [selectedZoneId, setSelectedZoneId] = useState<number | null>(null);
+
+  // Sync state once existingStore loads
+  const cityId = existingStore?.cityId ?? selectedCityId;
+  const zoneId = existingStore?.zoneId ?? selectedZoneId;
 
   // API Hooks
   const { data: citiesData, isLoading: loadingCities } =
     useGetCitiesQuery(undefined);
   const { data: zonesData, isLoading: loadingZones } = useGetZonesQuery(
-    selectedCityId!,
-    { skip: !selectedCityId },
+    cityId!,
+    { skip: !cityId },
   );
   const { data: areasData, isLoading: loadingAreas } = useGetAreasQuery(
-    selectedZoneId!,
-    { skip: !selectedZoneId },
+    zoneId!,
+    { skip: !zoneId },
   );
 
   const [registerStore, { isLoading: registering }] =
@@ -78,8 +95,11 @@ export default function StoreRegistrationForm({ branchId, onSuccess }: Props) {
         branchId,
         ...values,
       }).unwrap();
-      message.success("Store registered successfully with Pathao!");
-      form.resetFields();
+      message.success(
+        existingStore
+          ? "Store updated successfully!"
+          : "Store registered successfully with Pathao!",
+      );
       onSuccess?.();
     } catch (error: unknown) {
       const errorMessage =
@@ -94,37 +114,79 @@ export default function StoreRegistrationForm({ branchId, onSuccess }: Props) {
   const zones = zonesData || [];
   const areas = areasData || [];
 
+  if (loadingStore) {
+    return (
+      <div style={{ textAlign: "center", padding: 48 }}>
+        <Spin size="large" />
+        <div style={{ marginTop: 16, color: "#888" }}>
+          Loading store information...
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
       <Space orientation="vertical" size="large" style={{ width: "100%" }}>
         <div>
           <Title level={4}>
-            <ShopOutlined /> Register Pathao Pickup Store
+            <ShopOutlined />{" "}
+            {existingStore
+              ? "Pathao Pickup Store"
+              : "Register Pathao Pickup Store"}
           </Title>
           <Paragraph type="secondary">
-            Register this branch as a pickup location with Pathao. This is
-            required before you can create deliveries.
+            {existingStore
+              ? "Your branch is registered as a pickup location with Pathao."
+              : "Register this branch as a pickup location with Pathao. This is required before you can create deliveries."}
           </Paragraph>
         </div>
 
-        <Alert
-          title="Important"
-          description="Make sure you have configured Pathao API credentials in the 'API Credentials' tab before
-registering a store."
-          type="info"
-          showIcon
-        />
+        {/* Show existing store info banner */}
+        {existingStore && (
+          <Alert
+            message={
+              <span>
+                <CheckCircleOutlined style={{ color: "#52c41a" }} />{" "}
+                <strong>Store Registered</strong> — Pathao Store ID:{" "}
+                <Tag color="green">#{existingStore.pathaoStoreId}</Tag>
+              </span>
+            }
+            description="This branch is already registered with Pathao. You can update the details below if needed."
+            type="success"
+            showIcon={false}
+          />
+        )}
 
-        <Card>
+        {!existingStore && (
+          <Alert
+            description="Make sure you have configured Pathao API credentials in the 'API Credentials' tab before registering a store."
+            type="info"
+            showIcon
+          />
+        )}
+
+        <Card title={existingStore ? "Store Details" : "Store Information"}>
           <Form
             form={form}
             layout="vertical"
             onFinish={onFinish}
             autoComplete="off"
+            initialValues={
+              existingStore
+                ? {
+                    name: existingStore.name,
+                    contactName: existingStore.contactName,
+                    contactNumber: existingStore.contactNumber,
+                    secondaryContact: existingStore.secondaryContact,
+                    address: existingStore.address,
+                    cityId: existingStore.cityId,
+                    zoneId: existingStore.zoneId,
+                    areaId: existingStore.areaId,
+                  }
+                : undefined
+            }
           >
-            {/* Store Information */}
-            <Title level={5}>Store Information</Title>
-
             <Form.Item
               label="Store Name"
               name="name"
@@ -189,20 +251,6 @@ registering a store."
             </Form.Item>
 
             <Form.Item
-              label="OTP Number (Optional)"
-              name="otpNumber"
-              rules={[
-                {
-                  pattern: /^01[0-9]{9}$/,
-                  message: "Must be a valid 11-digit BD number",
-                },
-              ]}
-              tooltip="OTP verification codes for orders from this store will be sent to this number"
-            >
-              <Input placeholder="01XXXXXXXXX" maxLength={11} />
-            </Form.Item>
-
-            <Form.Item
               label="Pickup Address"
               name="address"
               rules={[
@@ -220,7 +268,6 @@ registering a store."
               />
             </Form.Item>
 
-            {/* Location Selection */}
             <Title level={5}>
               <EnvironmentOutlined /> Pickup Location
             </Title>
@@ -253,7 +300,7 @@ registering a store."
               <Select
                 placeholder="Select zone"
                 onChange={handleZoneChange}
-                disabled={!selectedCityId}
+                disabled={!cityId}
                 loading={loadingZones}
                 showSearch
                 optionFilterProp="children"
@@ -274,7 +321,7 @@ registering a store."
               <Select
                 placeholder="Select area"
                 loading={loadingAreas}
-                disabled={!selectedZoneId}
+                disabled={!zoneId}
                 showSearch
                 optionFilterProp="children"
               >
@@ -297,7 +344,9 @@ registering a store."
                 size="large"
                 block
               >
-                Register Store with Pathao
+                {existingStore
+                  ? "Update Store Details"
+                  : "Register Store with Pathao"}
               </Button>
             </Form.Item>
           </Form>

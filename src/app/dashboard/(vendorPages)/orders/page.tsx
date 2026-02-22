@@ -34,7 +34,18 @@ const getStatusColor = (status: OrderStatus) => {
 
 // Format status for display
 const formatStatus = (status: OrderStatus) => {
-  return status.replace(/_/g, " ");
+  const labels: Record<OrderStatus, string> = {
+    PENDING: "Pending",
+    CONFIRMED: "Confirmed",
+    PROCESSING: "Processing",
+    READY_FOR_PICKUP: "Ready for Pickup",
+    SHIPPED: "Shipped",
+    OUT_FOR_DELIVERY: "Out for Delivery",
+    DELIVERED: "Delivered",
+    CANCELLED: "Cancelled",
+    RETURNED: "Returned",
+  };
+  return labels[status] || status.replace(/_/g, " ");
 };
 
 const VendorOrdersPage = () => {
@@ -188,7 +199,7 @@ const VendorOrdersPage = () => {
   return (
     <div>
       <ActionBar title="My Orders">
-        <Space>
+        <Space orientation="horizontal" wrap>
           <Input
             placeholder="Search orders..."
             prefix={<SearchOutlined />}
@@ -199,22 +210,21 @@ const VendorOrdersPage = () => {
 
           <Select
             placeholder="Filter by status"
-            style={{ width: 180 }}
+            style={{ width: 190 }}
             onChange={(value) => setStatusFilter(value as OrderStatus | "")}
             allowClear
             value={statusFilter || undefined}
           >
-            <Select.Option value="">All Statuses</Select.Option>
-            <Select.Option value="PLACED">Placed</Select.Option>
-            <Select.Option value="VOICE_CONFIRMED">
-              Voice Confirmed
-            </Select.Option>
-            <Select.Option value="VENDOR_CONFIRMED">
-              Vendor Confirmed
-            </Select.Option>
+            <Select.Option value="PENDING">Pending</Select.Option>
+            <Select.Option value="CONFIRMED">Confirmed</Select.Option>
             <Select.Option value="PROCESSING">Processing</Select.Option>
-            <Select.Option value="READY_TO_SHIP">Ready to Ship</Select.Option>
+            <Select.Option value="READY_FOR_PICKUP">
+              Ready for Pickup
+            </Select.Option>
             <Select.Option value="SHIPPED">Shipped</Select.Option>
+            <Select.Option value="OUT_FOR_DELIVERY">
+              Out for Delivery
+            </Select.Option>
             <Select.Option value="DELIVERED">Delivered</Select.Option>
             <Select.Option value="CANCELLED">Cancelled</Select.Option>
             <Select.Option value="RETURNED">Returned</Select.Option>

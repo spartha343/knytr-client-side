@@ -72,7 +72,21 @@ const UpdateStatusModal = ({
     useUpdateOrderStatusMutation();
 
   // Get valid transitions for current status
-  const validTransitions = STATUS_TRANSITIONS[currentStatus] || [];
+  // Statuses managed by Pathao — vendor cannot manually update these
+  const pathaoManagedStatuses: OrderStatus[] = [
+    OrderStatus.SHIPPED,
+    OrderStatus.OUT_FOR_DELIVERY,
+    OrderStatus.DELIVERED,
+    OrderStatus.RETURNED,
+  ];
+
+  const isPathaoManaged =
+    hasPathaoDelivery && pathaoManagedStatuses.includes(currentStatus);
+
+  // If Pathao is managing, no manual transitions allowed
+  const validTransitions = isPathaoManaged
+    ? []
+    : STATUS_TRANSITIONS[currentStatus] || [];
 
   // Handle status update
   const handleStatusUpdate = async () => {
@@ -92,7 +106,6 @@ const UpdateStatusModal = ({
       message.success("Order status updated successfully!");
       handleClose();
     } catch (error: unknown) {
-      console.log(error);
       console.error("Failed to update status:", error);
       message.error("Failed to update order status. Please try again.");
     }
@@ -132,14 +145,26 @@ const UpdateStatusModal = ({
               }}
             >
               <p style={{ margin: 0, color: "#666" }}>
-                No status transitions available from{" "}
-                {STATUS_LABELS[currentStatus]}.
-                {currentStatus === OrderStatus.CANCELLED &&
-                  " Order is cancelled."}
-                {currentStatus === OrderStatus.RETURNED &&
-                  " Order is returned."}
-                {currentStatus === OrderStatus.DELIVERED &&
-                  " Order is delivered. Can only be returned."}
+                {isPathaoManaged ? (
+                  <>
+                    This order is currently being managed by{" "}
+                    <strong>Pathao Delivery</strong>. Status will be
+                    automatically updated from Pathao. Use the{" "}
+                    <strong>Sync Status</strong> button on the Pathao Delivery
+                    card to get the latest status.
+                  </>
+                ) : (
+                  <>
+                    No status transitions available from{" "}
+                    {STATUS_LABELS[currentStatus]}.
+                    {currentStatus === OrderStatus.CANCELLED &&
+                      " Order is cancelled."}
+                    {currentStatus === OrderStatus.RETURNED &&
+                      " Order is returned."}
+                    {currentStatus === OrderStatus.DELIVERED &&
+                      " Order is delivered."}
+                  </>
+                )}
               </p>
             </div>
           </Form.Item>
@@ -177,8 +202,8 @@ const UpdateStatusModal = ({
                 }}
               >
                 <p style={{ margin: 0, fontSize: "12px", color: "#0050b3" }}>
-                  ℹ️ This order has Pathao delivery. Mark as
-                  &rsquo;Shipped&rsquo; after handing over to Pathao.
+                  This order has Pathao delivery. Mark as &apos;Shipped&apos;
+                  after handing over to Pathao.
                 </p>
               </div>
             </Form.Item>

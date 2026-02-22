@@ -7,6 +7,7 @@ import {
   UserAddOutlined,
   TagsOutlined,
   AppstoreAddOutlined,
+  EnvironmentOutlined,
 } from "@ant-design/icons";
 import Link from "next/link";
 import { ROLE, RoleType } from "@/types/authTypes";
@@ -43,11 +44,6 @@ export const sidebarItems = (roles: RoleType[]): MenuProps["items"] => {
       key: "/dashboard/cart",
       icon: <ShoppingCartOutlined />,
     },
-    {
-      label: <Link href="/dashboard/orders">Orders</Link>,
-      key: "/dashboard/orders",
-      icon: <TableOutlined />,
-    },
   ];
 
   // Vendor-only items
@@ -61,6 +57,11 @@ export const sidebarItems = (roles: RoleType[]): MenuProps["items"] => {
       label: <Link href="/dashboard/products">Products</Link>,
       key: "/dashboard/products",
       icon: <ShoppingCartOutlined />,
+    },
+    {
+      label: <Link href="/dashboard/orders">Orders</Link>,
+      key: "/dashboard/orders",
+      icon: <TableOutlined />,
     },
   ];
 
@@ -97,6 +98,11 @@ export const sidebarItems = (roles: RoleType[]): MenuProps["items"] => {
       label: <Link href="/dashboard/all-branches">All Branches</Link>,
       key: "/dashboard/all-branches",
       icon: <TableOutlined />,
+    },
+    {
+      label: <Link href="/dashboard/pathao-locations">Pathao Locations</Link>,
+      key: "/dashboard/pathao-locations",
+      icon: <EnvironmentOutlined />,
     },
   ];
 

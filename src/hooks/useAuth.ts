@@ -27,7 +27,9 @@ import { ensureDbUserExistsAndReturnProfile } from "@/services/auth.service";
  */
 export const useAuth = () => {
   const [firebaseUser, firebaseLoading] = useAuthState(auth);
-  const { dbUser, syncing, syncError } = useAppSelector((state) => state.auth);
+  const { dbUser, syncing, syncError, initialized } = useAppSelector(
+    (state) => state.auth,
+  );
   const dispatch = useAppDispatch();
 
   // Track which user we've synced to prevent duplicate API calls
@@ -90,5 +92,6 @@ export const useAuth = () => {
     // Computed states
     isAuthenticated: !!firebaseUser && !!dbUser,
     isLoading: firebaseLoading || syncing,
+    isInitialized: initialized,
   };
 };

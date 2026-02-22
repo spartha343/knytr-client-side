@@ -124,7 +124,10 @@ const VendorOrderDetailPage = () => {
 
         {/* Pathao Delivery Information (if exists) */}
         {order.pathaoDelivery && (
-          <PathaoDeliveryCard delivery={order.pathaoDelivery} />
+          <PathaoDeliveryCard
+            delivery={order.pathaoDelivery}
+            orderId={order.id}
+          />
         )}
 
         {/* Order Items Table */}

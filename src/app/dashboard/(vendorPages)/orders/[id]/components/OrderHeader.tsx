@@ -58,8 +58,17 @@ const OrderHeader = ({
   onBookPathaoDelivery,
   onBack,
 }: OrderHeaderProps) => {
-  const isStatusUpdateDisabled =
-    status === "DELIVERED" || status === "CANCELLED" || status === "RETURNED";
+  const pathaoManagedStatuses = [
+    "SHIPPED",
+    "OUT_FOR_DELIVERY",
+    "DELIVERED",
+    "CANCELLED",
+    "RETURNED",
+  ];
+
+  const isStatusUpdateDisabled = hasPathaoDelivery
+    ? pathaoManagedStatuses.includes(status)
+    : status === "DELIVERED" || status === "CANCELLED" || status === "RETURNED";
   const [user] = useAuthState(auth);
 
   const [downloadingInvoice, setDownloadingInvoice] = useState(false);
@@ -163,7 +172,7 @@ const OrderHeader = ({
                 disabled
                 style={{ background: "#f0f0f0" }}
               >
-                Pathao Delivery Booked ✓
+                Pathao Delivery Booked
               </Button>
             ) : (
               onBookPathaoDelivery &&

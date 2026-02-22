@@ -76,3 +76,19 @@ export interface IPathaoCredentialsInput {
   environment: "sandbox" | "production";
   webhookSecret?: string;
 }
+
+export interface IPathaoStore {
+  id: string;
+  branchId: string;
+  pathaoStoreId: number;
+  name: string;
+  contactName: string;
+  contactNumber: string;
+  secondaryContact?: string | null;
+  address: string;
+  cityId: number;
+  zoneId: number;
+  areaId: number;
+  isActive: boolean;
+  createdAt: string;
+}

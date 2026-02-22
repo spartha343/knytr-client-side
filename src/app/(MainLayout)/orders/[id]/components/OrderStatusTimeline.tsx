@@ -9,140 +9,271 @@ import {
   CarOutlined,
   HomeOutlined,
   WarningOutlined,
+  InboxOutlined,
+  EnvironmentOutlined,
+  SyncOutlined,
 } from "@ant-design/icons";
 import { OrderStatus, IOrderActivity } from "@/types/order";
+
+interface StatusHistoryItem {
+  id: string;
+  status: string;
+  createdAt: string;
+}
+
+interface PathaoDelivery {
+  status: string;
+  statusHistory?: StatusHistoryItem[];
+}
 
 interface OrderStatusTimelineProps {
   currentStatus: OrderStatus;
   activities?: IOrderActivity[];
   createdAt: string;
+  pathaoDelivery?: PathaoDelivery | null;
 }
+
+// Human-friendly labels for our internal order statuses
+const ORDER_STATUS_LABELS: Record<string, string> = {
+  PENDING: "Order Placed",
+  CONFIRMED: "Order Confirmed",
+  PROCESSING: "Preparing Your Order",
+  READY_FOR_PICKUP: "Ready for Courier Pickup",
+  SHIPPED: "Handed to Courier",
+  OUT_FOR_DELIVERY: "Out for Delivery",
+  DELIVERED: "Delivered",
+  CANCELLED: "Cancelled",
+  RETURNED: "Returned",
+};
+
+// Human-friendly labels for Pathao delivery statuses
+const PATHAO_STATUS_LABELS: Record<string, string> = {
+  Pending: "Delivery Booked",
+  PICKUP_REQUESTED: "Pickup Requested",
+  ASSIGNED_FOR_PICKUP: "Rider Assigned for Pickup",
+  PICKED_UP: "Picked Up by Rider",
+  AT_SORTING_HUB: "At Sorting Hub",
+  IN_TRANSIT: "In Transit",
+  RECEIVED_AT_LAST_MILE: "Arrived at Local Hub",
+  ASSIGNED_FOR_DELIVERY: "Out for Delivery",
+  DELIVERED: "Delivered",
+  PARTIAL_DELIVERY: "Partially Delivered",
+  DELIVERY_FAILED: "Delivery Failed",
+  ON_HOLD: "On Hold",
+  RETURNED: "Returned to Sender",
+  PICKUP_CANCELLED: "Pickup Cancelled",
+  CANCELLED: "Cancelled",
+  PAYMENT_INVOICE: "Payment Invoice",
+  PAID_RETURN: "Paid Return",
+};
+
+// Icons for our internal statuses
+const getOrderStatusIcon = (status: string) => {
+  const icons: Record<string, React.ReactNode> = {
+    PENDING: <ClockCircleOutlined />,
+    CONFIRMED: <CheckCircleOutlined />,
+    PROCESSING: <ShoppingOutlined />,
+    READY_FOR_PICKUP: <InboxOutlined />,
+    SHIPPED: <CarOutlined />,
+    OUT_FOR_DELIVERY: <CarOutlined />,
+    DELIVERED: <HomeOutlined />,
+    CANCELLED: <CloseCircleOutlined />,
+    RETURNED: <CloseCircleOutlined />,
+  };
+  return icons[status] || <ClockCircleOutlined />;
+};
+
+// Icons for Pathao statuses
+const getPathaoStatusIcon = (status: string) => {
+  const icons: Record<string, React.ReactNode> = {
+    Pending: <SyncOutlined />,
+    PICKUP_REQUESTED: <SyncOutlined />,
+    ASSIGNED_FOR_PICKUP: <CarOutlined />,
+    PICKED_UP: <CarOutlined />,
+    AT_SORTING_HUB: <InboxOutlined />,
+    IN_TRANSIT: <CarOutlined />,
+    RECEIVED_AT_LAST_MILE: <EnvironmentOutlined />,
+    ASSIGNED_FOR_DELIVERY: <CarOutlined />,
+    DELIVERED: <HomeOutlined />,
+    PARTIAL_DELIVERY: <WarningOutlined />,
+    DELIVERY_FAILED: <CloseCircleOutlined />,
+    ON_HOLD: <ClockCircleOutlined />,
+    RETURNED: <CloseCircleOutlined />,
+    PICKUP_CANCELLED: <CloseCircleOutlined />,
+    CANCELLED: <CloseCircleOutlined />,
+  };
+  return icons[status] || <SyncOutlined />;
+};
+
+const formatTime = (dateStr: string) =>
+  new Date(dateStr).toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+const getActivityTime = (
+  status: OrderStatus,
+  activities: IOrderActivity[] | undefined,
+  createdAt: string,
+): string | null => {
+  if (status === OrderStatus.PENDING) return formatTime(createdAt);
+  if (!activities || activities.length === 0) return null;
+  const activity = activities.find(
+    (a) => a.action.includes(status) || a.description?.includes(status),
+  );
+  return activity ? formatTime(activity.createdAt) : null;
+};
 
 const OrderStatusTimeline = ({
   currentStatus,
   activities,
   createdAt,
+  pathaoDelivery,
 }: OrderStatusTimelineProps) => {
-  // Define the order flow
-  const orderFlow: OrderStatus[] = [
+  // Our internal order flow (vendor-managed stages)
+  const vendorFlow: OrderStatus[] = [
     OrderStatus.PENDING,
     OrderStatus.CONFIRMED,
     OrderStatus.PROCESSING,
     OrderStatus.READY_FOR_PICKUP,
-    OrderStatus.SHIPPED,
-    OrderStatus.OUT_FOR_DELIVERY,
-    OrderStatus.DELIVERED,
   ];
 
-  // Get current step index
-  const getCurrentStep = (): number => {
-    if (currentStatus === OrderStatus.CANCELLED) {
-      return -1; // Special handling for cancelled
-    }
-    return orderFlow.indexOf(currentStatus);
-  };
+  const isTerminal =
+    currentStatus === OrderStatus.CANCELLED ||
+    currentStatus === OrderStatus.RETURNED;
 
-  const currentStep = getCurrentStep();
-
-  // Get icon for each status
-  const getIcon = (status: OrderStatus) => {
-    const icons: Record<OrderStatus, React.ReactNode> = {
-      [OrderStatus.PENDING]: <ClockCircleOutlined />,
-      [OrderStatus.CONFIRMED]: <CheckCircleOutlined />,
-      [OrderStatus.PROCESSING]: <ShoppingOutlined />,
-      [OrderStatus.READY_FOR_PICKUP]: <ShoppingOutlined />,
-      [OrderStatus.SHIPPED]: <CarOutlined />,
-      [OrderStatus.OUT_FOR_DELIVERY]: <CarOutlined />,
-      [OrderStatus.DELIVERED]: <HomeOutlined />,
-      [OrderStatus.CANCELLED]: <CloseCircleOutlined />,
-      [OrderStatus.RETURNED]: <CloseCircleOutlined />,
-    };
-    return icons[status] || <ClockCircleOutlined />;
-  };
-
-  // Get activity timestamp for a status
-  const getActivityTime = (status: OrderStatus): string | null => {
-    if (!activities || activities.length === 0) return null;
-
-    const activity = activities.find(
-      (a) => a.action.includes(status) || a.description?.includes(status),
+  // Build vendor steps
+  const vendorSteps = vendorFlow.map((status) => {
+    const statusIndex = vendorFlow.indexOf(status);
+    const currentIndex = vendorFlow.indexOf(
+      currentStatus as (typeof vendorFlow)[number],
     );
 
-    if (activity) {
-      return new Date(activity.createdAt).toLocaleString("en-US", {
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    }
+    // If order is past READY_FOR_PICKUP (Pathao took over), all vendor steps are done
+    const isPathaoPhase =
+      !vendorFlow.includes(currentStatus as (typeof vendorFlow)[number]) &&
+      !isTerminal;
 
-    // For PENDING, use order created time
-    if (status === OrderStatus.PENDING) {
-      return new Date(createdAt).toLocaleString("en-US", {
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    }
+    const isPast = isPathaoPhase || statusIndex < currentIndex;
+    const isCurrent = !isPathaoPhase && statusIndex === currentIndex;
 
-    return null;
-  };
+    return {
+      title: ORDER_STATUS_LABELS[status],
+      description: getActivityTime(status, activities, createdAt),
+      status: isPast
+        ? ("finish" as const)
+        : isCurrent
+          ? ("process" as const)
+          : ("wait" as const),
+      icon: getOrderStatusIcon(status),
+    };
+  });
 
-  // Format status for display
-  const formatStatus = (status: OrderStatus): string => {
-    return status.replace(/_/g, " ");
-  };
+  // Build Pathao delivery steps from statusHistory
+  const pathaoSteps =
+    pathaoDelivery?.statusHistory && pathaoDelivery.statusHistory.length > 0
+      ? pathaoDelivery.statusHistory.map((entry, index) => {
+          const isLast = index === pathaoDelivery.statusHistory!.length - 1;
+          return {
+            title: PATHAO_STATUS_LABELS[entry.status] || entry.status,
+            description: formatTime(entry.createdAt),
+            status:
+              isLast &&
+              entry.status !== "DELIVERED" &&
+              entry.status !== "RETURNED"
+                ? ("process" as const)
+                : ("finish" as const),
+            icon: getPathaoStatusIcon(entry.status),
+          };
+        })
+      : pathaoDelivery
+        ? [
+            {
+              title: "Delivery Booked",
+              description: null,
+              status: "process" as const,
+              icon: <SyncOutlined spin />,
+            },
+          ]
+        : [];
 
   // Handle cancelled orders
   if (currentStatus === OrderStatus.CANCELLED) {
+    const cancelTime = getActivityTime(
+      OrderStatus.CANCELLED,
+      activities,
+      createdAt,
+    );
     return (
       <Card title="Order Status">
         <div style={{ textAlign: "center", padding: "24px 0" }}>
           <CloseCircleOutlined style={{ fontSize: 48, color: "#ff4d4f" }} />
           <h3 style={{ marginTop: 16, color: "#ff4d4f" }}>Order Cancelled</h3>
           <p style={{ color: "#888" }}>
-            {getActivityTime(OrderStatus.CANCELLED) ||
-              "This order has been cancelled"}
+            {cancelTime || "This order has been cancelled"}
           </p>
         </div>
       </Card>
     );
   }
 
-  // Build steps for timeline
-  const steps = orderFlow.map((status, index) => {
-    const isPast = index < currentStep;
-    const isCurrent = index === currentStep;
-    const time = getActivityTime(status);
-
-    return {
-      title: formatStatus(status),
-      description: time,
-      status: isPast
-        ? ("finish" as const)
-        : isCurrent
-          ? ("process" as const)
-          : ("wait" as const),
-      icon: getIcon(status),
-    };
-  });
+  // Handle returned orders
+  if (currentStatus === OrderStatus.RETURNED) {
+    return (
+      <Card title="Order Status">
+        <div style={{ textAlign: "center", padding: "24px 0" }}>
+          <CloseCircleOutlined style={{ fontSize: 48, color: "#faad14" }} />
+          <h3 style={{ marginTop: 16, color: "#faad14" }}>Order Returned</h3>
+          <p style={{ color: "#888" }}>This order has been returned</p>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card title="Order Progress">
+      {/* Vendor-managed steps */}
       <Steps
-        current={currentStep}
-        items={steps}
+        items={vendorSteps}
         direction="vertical"
-        style={{ marginTop: 16 }}
+        style={{ marginBottom: pathaoDelivery ? 8 : 16 }}
       />
+
+      {/* Pathao delivery steps — shown only after Pathao takes over */}
+      {pathaoDelivery && (
+        <>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              margin: "4px 0 4px 0",
+              paddingLeft: 4,
+              borderLeft: "2px solid #91caff",
+              paddingTop: 4,
+              paddingBottom: 4,
+            }}
+          >
+            <CarOutlined style={{ color: "#1890ff", fontSize: 12 }} />
+            <span style={{ fontSize: 12, color: "#1890ff", fontWeight: 500 }}>
+              Courier is handling delivery from here
+            </span>
+          </div>
+          <Steps
+            items={pathaoSteps}
+            direction="vertical"
+            style={{ marginBottom: 16 }}
+          />
+        </>
+      )}
 
       {/* Helper text */}
       <div
         style={{
-          marginTop: 24,
-          padding: 16,
+          marginTop: 8,
+          padding: 12,
           background: "#f5f5f5",
           borderRadius: 8,
         }}
@@ -150,20 +281,17 @@ const OrderStatusTimeline = ({
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <WarningOutlined style={{ color: "#1890ff" }} />
           <span style={{ fontSize: 12, color: "#666" }}>
-            {currentStatus === OrderStatus.PENDING &&
-              "Your order is waiting for vendor confirmation"}
-            {currentStatus === OrderStatus.CONFIRMED &&
-              "Your order has been confirmed and will be processed soon"}
-            {currentStatus === OrderStatus.PROCESSING &&
-              "Your order is being prepared for shipment"}
-            {currentStatus === OrderStatus.READY_FOR_PICKUP &&
-              "Your order is ready and will be shipped soon"}
-            {currentStatus === OrderStatus.SHIPPED &&
-              "Your order has been shipped and is on the way"}
-            {currentStatus === OrderStatus.OUT_FOR_DELIVERY &&
-              "Your order is out for delivery"}
-            {currentStatus === OrderStatus.DELIVERED &&
-              "Your order has been delivered successfully"}
+            {pathaoDelivery
+              ? "Your order is with the courier. Track the delivery status above."
+              : currentStatus === OrderStatus.PENDING
+                ? "Your order is waiting for vendor confirmation."
+                : currentStatus === OrderStatus.CONFIRMED
+                  ? "Your order has been confirmed and will be prepared soon."
+                  : currentStatus === OrderStatus.PROCESSING
+                    ? "Your order is being carefully prepared."
+                    : currentStatus === OrderStatus.READY_FOR_PICKUP
+                      ? "Your order is packed and waiting for courier pickup."
+                      : null}
           </span>
         </div>
       </div>

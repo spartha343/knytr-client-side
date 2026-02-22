@@ -102,10 +102,6 @@ const Header = () => {
           label: <Link href="/orders">My Orders</Link>,
         },
         {
-          key: "wishlist",
-          label: <Link href="/wishlist">Wishlist</Link>,
-        },
-        {
           type: "divider" as const,
         },
         {
@@ -141,7 +137,7 @@ const Header = () => {
   const mobileMenuItems = [
     { key: "home", label: <Link href="/">Home</Link> },
     { key: "products", label: <Link href="/products">Products</Link> },
-    { key: "stores", label: <Link href="/stores">Stores</Link> },
+    // { key: "stores", label: <Link href="/stores">Stores</Link> },
   ];
 
   return (
@@ -182,14 +178,14 @@ const Header = () => {
             />
 
             {/* Language Toggle */}
-            <Button
+            {/* <Button
               type="text"
               icon={<GlobalOutlined />}
               onClick={toggleLanguage}
               style={{ fontSize: "16px" }}
             >
               {language.toUpperCase()}
-            </Button>
+            </Button> */}
 
             {/* Logo */}
             <Link
@@ -210,9 +206,9 @@ const Header = () => {
               <Link href="/products" style={{ color: "#333", fontWeight: 500 }}>
                 Products
               </Link>
-              <Link href="/stores" style={{ color: "#333", fontWeight: 500 }}>
+              {/* <Link href="/stores" style={{ color: "#333", fontWeight: 500 }}>
                 Stores
-              </Link>
+              </Link> */}
             </nav>
           </div>
 
@@ -233,8 +229,8 @@ const Header = () => {
 
           {/* Right Side */}
           <Space size="middle">
-            <Link href="/products">
-              <Button type="text">Products</Button>
+            <Link href="/dashboard">
+              <Button type="text">Dashboard</Button>
             </Link>
 
             {/* Only render client-side content after mounting to prevent hydration mismatch */}
@@ -251,7 +247,7 @@ const Header = () => {
                     />
                   </Badge>
                 </Link>
-                <Link href="/wishlist">
+                {/* <Link href="/wishlist">
                   <Badge count={wishlistCount} showZero={false}>
                     <HeartOutlined
                       style={{
@@ -261,8 +257,8 @@ const Header = () => {
                       }}
                     />
                   </Badge>
-                </Link>
-                <Badge count={notificationsCount} showZero={false}>
+                </Link> */}
+                {/* <Badge count={notificationsCount} showZero={false}>
                   <BellOutlined
                     style={{
                       fontSize: "24px",
@@ -270,7 +266,7 @@ const Header = () => {
                       cursor: "pointer",
                     }}
                   />
-                </Badge>
+                </Badge> */}
 
                 {isAuthenticated && dbUser ? (
                   // ... dropdown menu code (keep as is)
@@ -290,9 +286,12 @@ const Header = () => {
                     />
                   </Dropdown>
                 ) : (
-                  <Link href="/sign-in">
-                    <Button type="primary">Sign In</Button>
-                  </Link>
+                  <Space>
+                    <Button onClick={handleSignIn}>Sign In</Button>
+                    <Button type="primary" onClick={handleSignUp}>
+                      Sign Up
+                    </Button>
+                  </Space>
                 )}
               </>
             ) : (

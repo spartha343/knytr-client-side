@@ -6,6 +6,7 @@ interface AuthState {
   syncing: boolean;
   syncError: boolean;
   signInIntent: boolean;
+  initialized: boolean; // ← NEW: true once first auth check completes
 }
 
 const initialState: AuthState = {
@@ -13,6 +14,7 @@ const initialState: AuthState = {
   syncing: false,
   syncError: false,
   signInIntent: false,
+  initialized: false, // ← starts false
 };
 
 const authSlice = createSlice({
@@ -23,11 +25,13 @@ const authSlice = createSlice({
       state.dbUser = action.payload;
       state.syncing = false;
       state.syncError = false;
+      state.initialized = true; // ← mark initialized on success
     },
     clearDbUser(state) {
       state.dbUser = null;
       state.syncing = false;
-      state.syncError = true;
+      state.syncError = false; // ← don't set error on logout
+      state.initialized = true; // ← mark initialized even on logout/failure
     },
     startSync(state) {
       state.syncing = true;

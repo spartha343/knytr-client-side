@@ -133,6 +133,7 @@ const CustomerOrderDetailPage = () => {
           currentStatus={order.status}
           activities={order.activities}
           createdAt={order.createdAt}
+          pathaoDelivery={order.pathaoDelivery}
         />
 
         <DeliveryInfoCard

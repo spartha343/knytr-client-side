@@ -112,7 +112,20 @@ const DeliveryInfoStep = ({
         <Form.Item
           label="Delivery Address"
           required
-          help="House/flat number, road, block, landmark etc."
+          validateStatus={
+            deliveryAddress && deliveryAddress.length < 10
+              ? "error"
+              : deliveryAddress && deliveryAddress.length > 220
+                ? "error"
+                : ""
+          }
+          help={
+            deliveryAddress && deliveryAddress.length < 10
+              ? "Address must be at least 10 characters (Pathao requirement)"
+              : deliveryAddress && deliveryAddress.length > 220
+                ? "Address must be at most 220 characters"
+                : "House/flat number, road, block, landmark etc."
+          }
         >
           <TextArea
             placeholder="e.g., House 12, Road 5, Block B, Mirpur-10"
@@ -120,6 +133,8 @@ const DeliveryInfoStep = ({
             onChange={(e) => onDeliveryAddressChange(e.target.value)}
             rows={3}
             size="large"
+            maxLength={220}
+            showCount
           />
         </Form.Item>
 

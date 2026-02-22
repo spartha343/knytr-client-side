@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Card, Tag, Empty, Spin, Input, Alert } from "antd";
+import { Card, Tag, Empty, Spin, Input, Alert, Pagination } from "antd";
 import { ShoppingOutlined, SearchOutlined } from "@ant-design/icons";
 import Link from "next/link";
 import { useGetCustomerOrdersQuery } from "@/redux/api/orderApi";
@@ -26,7 +26,18 @@ const getStatusColor = (status: OrderStatus) => {
 };
 
 const formatStatus = (status: OrderStatus) => {
-  return status.replace(/_/g, " ");
+  const labels: Record<OrderStatus, string> = {
+    PENDING: "Pending",
+    CONFIRMED: "Confirmed",
+    PROCESSING: "Processing",
+    READY_FOR_PICKUP: "Ready for Pickup",
+    SHIPPED: "Shipped",
+    OUT_FOR_DELIVERY: "Out for Delivery",
+    DELIVERED: "Delivered",
+    CANCELLED: "Cancelled",
+    RETURNED: "Returned",
+  };
+  return labels[status] || status.replace(/_/g, " ");
 };
 
 const CustomerOrdersPage = () => {
@@ -261,47 +272,13 @@ const CustomerOrdersPage = () => {
       {/* Pagination */}
       {meta && meta.total > size && (
         <div style={{ marginTop: 24, textAlign: "center" }}>
-          <div style={{ display: "inline-flex", gap: 8 }}>
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
-              style={{
-                padding: "8px 16px",
-                border: "1px solid #d9d9d9",
-                borderRadius: 4,
-                background: page === 1 ? "#f5f5f5" : "white",
-                cursor: page === 1 ? "not-allowed" : "pointer",
-              }}
-            >
-              Previous
-            </button>
-            <span
-              style={{
-                padding: "8px 16px",
-                border: "1px solid #d9d9d9",
-                borderRadius: 4,
-              }}
-            >
-              Page {page} of {Math.ceil(meta.total / size)}
-            </span>
-            <button
-              onClick={() => setPage((p) => p + 1)}
-              disabled={page >= Math.ceil(meta.total / size)}
-              style={{
-                padding: "8px 16px",
-                border: "1px solid #d9d9d9",
-                borderRadius: 4,
-                background:
-                  page >= Math.ceil(meta.total / size) ? "#f5f5f5" : "white",
-                cursor:
-                  page >= Math.ceil(meta.total / size)
-                    ? "not-allowed"
-                    : "pointer",
-              }}
-            >
-              Next
-            </button>
-          </div>
+          <Pagination
+            current={page}
+            total={meta.total}
+            pageSize={size}
+            onChange={(p) => setPage(p)}
+            showSizeChanger={false}
+          />
         </div>
       )}
     </div>

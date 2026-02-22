@@ -5,6 +5,7 @@ import type {
   IPathaoZone,
   IPathaoArea,
   IPathaoCredentials,
+  IPathaoStore,
 } from "@/types/pathao";
 
 const PATHAO_URL = "/pathao";
@@ -109,7 +110,6 @@ export const pathaoApi = baseApi.injectEndpoints({
         response.data,
       providesTags: [tagTypes.pathao],
     }),
-
     // Retry failed delivery
     retryDelivery: build.mutation({
       query: (deliveryId: string) => ({
@@ -117,6 +117,77 @@ export const pathaoApi = baseApi.injectEndpoints({
         method: "POST",
       }),
       invalidatesTags: [tagTypes.order, tagTypes.pathao],
+    }),
+
+    getStoreByBranch: build.query<{ data: IPathaoStore | null }, string>({
+      query: (branchId) => ({
+        url: `/pathao/stores/branch/${branchId}`,
+        method: "GET",
+      }),
+      providesTags: [tagTypes.pathaoStore],
+    }),
+
+    // Sync delivery status from Pathao API
+    syncDeliveryStatus: build.mutation({
+      query: (orderId: string) => ({
+        url: `${PATHAO_URL}/orders/${orderId}/sync-status`,
+        method: "POST",
+      }),
+      invalidatesTags: [tagTypes.order, tagTypes.pathao],
+    }),
+
+    syncLocations: build.mutation<
+      {
+        data: { cities: number; zones: number; areas: number; message: string };
+      },
+      { fullSync?: boolean; maxZones?: number }
+    >({
+      query: (params) => ({
+        url: `/pathao/sync-locations`,
+        method: "POST",
+        body: params,
+      }),
+      invalidatesTags: [tagTypes.pathao],
+    }),
+
+    syncAreasBatch: build.mutation<
+      {
+        data: {
+          processedZones: number;
+          totalAreas: number;
+          failedZones: number;
+          lastProcessedZoneId: number | null;
+          message: string;
+        };
+      },
+      { batchSize?: number; startFromZoneId?: number }
+    >({
+      query: (params) => ({
+        url: `/pathao/sync-areas-batch`,
+        method: "POST",
+        body: params,
+      }),
+      invalidatesTags: [tagTypes.pathao],
+    }),
+
+    getSyncProgress: build.query<
+      {
+        data: {
+          totalCities: number;
+          totalZones: number;
+          totalAreas: number;
+          zonesWithoutAreas: number;
+          syncPercentage: number;
+          message: string;
+        };
+      },
+      void
+    >({
+      query: () => ({
+        url: `/pathao/sync-progress`,
+        method: "GET",
+      }),
+      providesTags: [tagTypes.pathao],
     }),
   }),
 });
@@ -129,5 +200,10 @@ export const {
   useSaveCredentialsMutation,
   useGetCredentialsByBranchQuery,
   useRegisterStoreMutation,
+  useGetStoreByBranchQuery,
   useRetryDeliveryMutation,
+  useSyncDeliveryStatusMutation,
+  useSyncLocationsMutation,
+  useSyncAreasBatchMutation,
+  useGetSyncProgressQuery,
 } = pathaoApi;

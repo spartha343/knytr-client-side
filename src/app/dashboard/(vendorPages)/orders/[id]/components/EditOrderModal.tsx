@@ -375,14 +375,26 @@ export default function EditOrderModal({
               label="Customer Phone"
               rules={[
                 { required: true, message: "Phone is required" },
-                { min: 11, message: "Phone must be at least 11 digits" },
+                { len: 11, message: "Phone must be exactly 11 digits" },
+                {
+                  pattern: /^01[0-9]{9}$/,
+                  message:
+                    "Enter a valid Bangladeshi phone number (01XXXXXXXXX)",
+                },
               ]}
             >
               <Input placeholder="01XXXXXXXXX" />
             </Form.Item>
           </Col>
           <Col span={12}>
-            <Form.Item name="customerName" label="Customer Name">
+            <Form.Item
+              name="customerName"
+              label="Customer Name"
+              rules={[
+                { min: 3, message: "Name must be at least 3 characters" },
+                { max: 100, message: "Name must be at most 100 characters" },
+              ]}
+            >
               <Input placeholder="Enter customer name" />
             </Form.Item>
           </Col>
@@ -411,10 +423,20 @@ export default function EditOrderModal({
         <Title level={5}>Delivery Information</Title>
         <Row gutter={16}>
           <Col span={24}>
-            <Form.Item name="deliveryAddress" label="Delivery Address">
+            <Form.Item
+              name="deliveryAddress"
+              label="Delivery Address"
+              rules={[
+                { min: 10, message: "Address must be at least 10 characters" },
+                { max: 220, message: "Address must be at most 220 characters" },
+                { required: true, message: "Delivery address is required" },
+              ]}
+            >
               <TextArea
                 rows={2}
-                placeholder="Enter complete delivery address"
+                placeholder="e.g., House 12, Road 5, Block B, Mirpur-10"
+                showCount
+                maxLength={220}
               />
             </Form.Item>
           </Col>

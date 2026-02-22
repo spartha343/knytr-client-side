@@ -1,40 +1,25 @@
 "use client";
 
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { RoleType } from "@/types/authTypes";
+import { Spin } from "antd";
 
 interface IProtectedRoute {
   children: ReactNode;
   requiredRoles?: RoleType[];
 }
 
-/**
- * Protected Route Wrapper
- *
- * Ensures user is authenticated and has required roles before rendering children.
- * Redirects to sign-in if not authenticated.
- */
 const ProtectedRoutes = ({ children, requiredRoles }: IProtectedRoute) => {
   const router = useRouter();
-  const { isAuthenticated, isLoading, dbUser } = useAuth();
-
-  // Track if we're on the client to prevent hydration mismatch
-  const [isMounted, setIsMounted] = useState(false);
-
-  // Set mounted flag on client-side only
+  const { isAuthenticated, isLoading, isInitialized, dbUser } = useAuth();
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setIsMounted(true);
-  }, []);
+    // Wait until auth is fully initialized
+    if (!isInitialized || isLoading) return;
 
-  useEffect(() => {
-    // Wait for client-side mounting and auth check
-    if (!isMounted || isLoading) return;
-
-    // Not authenticated -> redirect to sign-in with return URL
+    // Not authenticated -> redirect to sign-in
     if (!isAuthenticated) {
       const currentPath = window.location.pathname;
       router.replace(`/sign-in?redirect=${encodeURIComponent(currentPath)}`);
@@ -47,17 +32,33 @@ const ProtectedRoutes = ({ children, requiredRoles }: IProtectedRoute) => {
       const hasRequiredRole = requiredRoles.some((role) =>
         userRoles.includes(role),
       );
-
       if (!hasRequiredRole) {
         router.replace("/unauthorized");
       }
     }
-  }, [isMounted, isLoading, isAuthenticated, requiredRoles, dbUser, router]);
+  }, [
+    isInitialized,
+    isLoading,
+    isAuthenticated,
+    requiredRoles,
+    dbUser,
+    router,
+  ]);
 
-  // During SSR or initial client render, show nothing
-  // This prevents hydration mismatch
-  if (!isMounted || isLoading) {
-    return null;
+  // Show spinner while auth is initializing — never redirect prematurely
+  if (!isInitialized || isLoading) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "100vh",
+        }}
+      >
+        <Spin size="large" />
+      </div>
+    );
   }
 
   // Not authenticated - don't render (redirect happening)
@@ -65,7 +66,6 @@ const ProtectedRoutes = ({ children, requiredRoles }: IProtectedRoute) => {
     return null;
   }
 
-  // Authenticated and authorized - render children
   return <>{children}</>;
 };
 
