@@ -106,10 +106,15 @@ const CreateManualOrderPage = () => {
       return;
     }
     if (currentStep === 1) {
-      if (!customerPhone || customerPhone.length < 11) {
-        message.error("Please enter a valid phone number (min 11 digits)");
+      if (!customerName || customerName.trim().length < 3) {
+        message.error("Customer name is required (minimum 3 characters)");
         return;
       }
+      if (!customerPhone || customerPhone.length < 11) {
+        message.error("Please enter a valid phone number");
+        return;
+      }
+      setCurrentStep(2);
     }
     if (currentStep === 2 && items.length === 0) {
       message.error("Please add at least one product");
@@ -142,7 +147,7 @@ const CreateManualOrderPage = () => {
       const orderData: ICreateManualOrderInput = {
         storeId: selectedStoreId!,
         customerPhone,
-        customerName: customerName || undefined,
+        customerName: customerName,
         customerEmail: customerEmail || undefined,
         secondaryPhone: secondaryPhone || undefined,
         specialInstructions: specialInstructions || undefined,

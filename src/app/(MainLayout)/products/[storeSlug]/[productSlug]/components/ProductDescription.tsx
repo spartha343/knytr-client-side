@@ -19,9 +19,7 @@ export const ProductDescription = ({
   return (
     <div style={{ marginBottom: "24px" }}>
       <Title level={4}>Description</Title>
-      <Paragraph style={{ whiteSpace: "pre-wrap" }}>
-        {description}
-      </Paragraph>
+      <Paragraph style={{ whiteSpace: "pre-wrap" }}>{description}</Paragraph>
     </div>
   );
 };

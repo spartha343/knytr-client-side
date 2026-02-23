@@ -386,7 +386,7 @@ const CheckoutPage = () => {
                 <Col xs={24} md={12}>
                   <FormInput
                     name="deliveryAddress"
-                    label="Delivery Address"
+                    label="House / Road No"
                     placeholder="House, Road, Landmark (optional)"
                   />
                 </Col>

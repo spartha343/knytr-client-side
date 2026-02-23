@@ -17,6 +17,8 @@ import Form from "@/components/Forms/Form";
 import FormInput from "@/components/Forms/FormInput";
 import FormTextArea from "@/components/Forms/FormTextArea";
 import FormSelectField from "@/components/Forms/FormSelectField";
+import { useGetAllAttributesQuery } from "@/redux/api/attributeApi";
+import { Checkbox, Alert, Tag } from "antd";
 import {
   useGetProductByIdQuery,
   useUpdateProductMutation,
@@ -53,6 +55,17 @@ const EditProductPage = () => {
 
   const product = productData as IProduct;
   // Initialize with product data or defaults
+
+  const { data: attributesData } = useGetAllAttributesQuery({
+    limit: 100,
+    isActive: true,
+  });
+  const attributes =
+    (attributesData?.attributes as
+      | { id: string; name: string; displayName?: string }[]
+      | undefined) || [];
+  const hasVariants = (product?.variants?.length ?? 0) > 0;
+
   const [isActive, setIsActive] = useState<boolean>(
     () => product?.isActive ?? true,
   );
@@ -61,6 +74,13 @@ const EditProductPage = () => {
   );
   const [isFeatured, setIsFeatured] = useState<boolean>(
     () => product?.isFeatured ?? false,
+  );
+
+  const [selectedAttributes, setSelectedAttributes] = useState<string[]>(
+    () =>
+      product?.productAttributes?.map(
+        (pa: { attributeId: string }) => pa.attributeId,
+      ) || [],
   );
 
   const onSubmit = async (data: IUpdateProductInput) => {
@@ -76,6 +96,7 @@ const EditProductPage = () => {
         isActive,
         isPublished,
         isFeatured,
+        attributeIds: selectedAttributes,
       };
 
       const res = await updateProduct({ id, data: payload }).unwrap();
@@ -217,6 +238,77 @@ const EditProductPage = () => {
               />
             </Col>
           </Row>
+        </Card>
+
+        <Card title="🎨 Product Attributes" style={{ marginBottom: 16 }}>
+          {hasVariants ? (
+            <>
+              <Alert
+                message="Attributes are locked"
+                description="This product already has variants. Delete all variants first to change attributes."
+                type="warning"
+                showIcon
+                style={{ marginBottom: 16 }}
+              />
+              <div>
+                {product.productAttributes?.map(
+                  (pa: {
+                    attributeId: string;
+                    attribute?: { name: string };
+                  }) => (
+                    <Tag
+                      key={pa.attributeId}
+                      color="blue"
+                      style={{ margin: 4 }}
+                    >
+                      {pa.attribute?.name}
+                    </Tag>
+                  ),
+                )}
+                {(!product.productAttributes ||
+                  product.productAttributes.length === 0) && (
+                  <span style={{ color: "#888", fontStyle: "italic" }}>
+                    No attributes configured
+                  </span>
+                )}
+              </div>
+            </>
+          ) : (
+            <>
+              <p style={{ marginBottom: 16 }}>
+                Select attributes this product will use (e.g., Color, Size).
+                You&apos;ll create variants based on these in the variants page.
+              </p>
+              <Row gutter={[16, 16]}>
+                {attributes.map((attr) => (
+                  <Col xs={24} md={8} key={attr.id}>
+                    <Checkbox
+                      checked={selectedAttributes.includes(attr.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedAttributes([
+                            ...selectedAttributes,
+                            attr.id,
+                          ]);
+                        } else {
+                          setSelectedAttributes(
+                            selectedAttributes.filter((id) => id !== attr.id),
+                          );
+                        }
+                      }}
+                    >
+                      {attr.displayName || attr.name}
+                    </Checkbox>
+                  </Col>
+                ))}
+              </Row>
+              {attributes.length === 0 && (
+                <div style={{ color: "#888", fontStyle: "italic" }}>
+                  No attributes available. Please create attributes first.
+                </div>
+              )}
+            </>
+          )}
         </Card>
 
         <Card title="📦 Shipping (Optional)" style={{ marginBottom: 16 }}>

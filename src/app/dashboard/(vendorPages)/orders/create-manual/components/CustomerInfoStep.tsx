@@ -56,17 +56,23 @@ const CustomerInfoStep = ({
           />
         </Form.Item>
 
-        {/* Customer Name - Optional */}
+        {/* Customer Name - Required */}
         <Form.Item
           label={
             <span>
               <UserOutlined /> Customer Name
             </span>
           }
-          help="Optional - helps identify the customer"
+          required
+          validateStatus={customerName.trim() === "" ? "error" : ""}
+          help={
+            customerName.trim() === ""
+              ? "Customer name is required for manual orders"
+              : "Required - needed for Pathao delivery booking"
+          }
         >
           <Input
-            placeholder="Enter customer name (optional)"
+            placeholder="Enter customer name"
             value={customerName}
             onChange={(e) => onNameChange(e.target.value)}
             size="large"

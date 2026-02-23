@@ -115,7 +115,6 @@ const Header = () => {
               router.push("/");
             } catch (error) {
               message.error("Failed to sign out");
-              console.log(error);
             }
           },
         },

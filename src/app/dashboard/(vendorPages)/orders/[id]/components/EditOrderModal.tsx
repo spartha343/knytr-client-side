@@ -391,6 +391,7 @@ export default function EditOrderModal({
               name="customerName"
               label="Customer Name"
               rules={[
+                { required: true, message: "Customer name is required" },
                 { min: 3, message: "Name must be at least 3 characters" },
                 { max: 100, message: "Name must be at most 100 characters" },
               ]}

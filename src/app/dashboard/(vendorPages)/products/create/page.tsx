@@ -170,7 +170,6 @@ const CreateProductPage = () => {
                 label="Brand"
                 placeholder="Select brand"
                 options={brandOptions}
-                required
               />
             </Col>
           </Row>

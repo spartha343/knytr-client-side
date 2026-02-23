@@ -84,9 +84,17 @@ const UpdateStatusModal = ({
     hasPathaoDelivery && pathaoManagedStatuses.includes(currentStatus);
 
   // If Pathao is managing, no manual transitions allowed
+  // If READY_FOR_PICKUP but no Pathao delivery booked yet, block SHIPPED transition
+  const isBlockedByPathao =
+    currentStatus === OrderStatus.READY_FOR_PICKUP && !hasPathaoDelivery;
+
   const validTransitions = isPathaoManaged
     ? []
-    : STATUS_TRANSITIONS[currentStatus] || [];
+    : (STATUS_TRANSITIONS[currentStatus] || []).filter((s) => {
+        // Cannot manually set to SHIPPED — must book Pathao delivery first
+        if (s === OrderStatus.SHIPPED && isBlockedByPathao) return false;
+        return true;
+      });
 
   // Handle status update
   const handleStatusUpdate = async () => {
@@ -152,6 +160,13 @@ const UpdateStatusModal = ({
                     automatically updated from Pathao. Use the{" "}
                     <strong>Sync Status</strong> button on the Pathao Delivery
                     card to get the latest status.
+                  </>
+                ) : isBlockedByPathao ? (
+                  <>
+                    You must <strong>Book a Pathao Delivery</strong> before
+                    marking this order as Shipped. Please use the{" "}
+                    <strong>&quot;Book Pathao Delivery&quot;</strong> button to
+                    book a delivery first.
                   </>
                 ) : (
                   <>
