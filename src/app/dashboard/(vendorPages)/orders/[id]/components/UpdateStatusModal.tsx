@@ -1,15 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { Modal, Select, Form, Button, Space, Tag, message } from "antd";
+import { Modal, Select, Form, Button, Space, Tag, Alert, message } from "antd";
 import { useUpdateOrderStatusMutation } from "@/redux/api/orderApi";
-import { OrderStatus } from "@/types/order";
+import { IOrder, OrderStatus } from "@/types/order";
 
 interface UpdateStatusModalProps {
   isOpen: boolean;
   currentStatus: OrderStatus;
   orderId: string;
   hasPathaoDelivery?: boolean;
+  order?: IOrder;
   onClose: () => void;
 }
 
@@ -64,12 +65,30 @@ const UpdateStatusModal = ({
   currentStatus,
   orderId,
   hasPathaoDelivery = false,
+  order,
   onClose,
 }: UpdateStatusModalProps) => {
   const [newStatus, setNewStatus] = useState<OrderStatus | null>(null);
 
   const [updateOrderStatus, { isLoading: isUpdating }] =
     useUpdateOrderStatusMutation();
+
+  // Check for missing required fields when trying to confirm
+  const getMissingFieldsForConfirm = (): string[] => {
+    if (!order || currentStatus !== OrderStatus.PENDING) return [];
+    const missing: string[] = [];
+    if (!order.customerPhone) missing.push("Customer phone number");
+    if (!order.customerName || order.customerName.trim().length < 3)
+      missing.push("Customer name (min 3 characters)");
+    if (!order.deliveryAddress || order.deliveryAddress.trim().length < 10)
+      missing.push("Delivery address (min 10 characters)");
+    if (!order.deliveryLocation) missing.push("Delivery location");
+    if (!order.assignedBranchId) missing.push("Assigned branch");
+    if (!order.items || order.items.length === 0) missing.push("At least one order item");
+    return missing;
+  };
+
+  const missingFields = getMissingFieldsForConfirm();
 
   // Get valid transitions for current status
   // Statuses managed by Pathao — vendor cannot manually update these
@@ -224,6 +243,24 @@ const UpdateStatusModal = ({
             </Form.Item>
           )}
 
+        {/* Show missing fields warning when trying to confirm a PENDING order */}
+        {currentStatus === OrderStatus.PENDING && missingFields.length > 0 && (
+          <Form.Item>
+            <Alert
+              type="warning"
+              showIcon
+              message="Cannot confirm order — required fields are missing"
+              description={
+                <ul style={{ margin: "4px 0 0 0", paddingLeft: 20 }}>
+                  {missingFields.map((field) => (
+                    <li key={field}>{field}</li>
+                  ))}
+                </ul>
+              }
+            />
+          </Form.Item>
+        )}
+
         <Form.Item style={{ marginBottom: 0 }}>
           <Space style={{ width: "100%", justifyContent: "flex-end" }}>
             <Button onClick={handleClose}>Cancel</Button>
@@ -231,7 +268,11 @@ const UpdateStatusModal = ({
               type="primary"
               onClick={handleStatusUpdate}
               loading={isUpdating}
-              disabled={!newStatus || validTransitions.length === 0}
+              disabled={
+                !newStatus ||
+                validTransitions.length === 0 ||
+                (newStatus === OrderStatus.CONFIRMED && missingFields.length > 0)
+              }
             >
               Update Status
             </Button>

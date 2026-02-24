@@ -201,6 +201,7 @@ const OrderItemsList = ({ items }: OrderItemsListProps) => {
           columns={columns}
           pagination={false}
           rowKey="id"
+          scroll={{ x: "max-content" }}
         />
       </div>
 
@@ -212,6 +213,7 @@ const OrderItemsList = ({ items }: OrderItemsListProps) => {
           pagination={false}
           rowKey="id"
           showHeader={false}
+          scroll={{ x: "max-content" }}
         />
       </div>
 

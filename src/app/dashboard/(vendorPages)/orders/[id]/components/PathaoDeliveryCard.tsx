@@ -207,7 +207,7 @@ const PathaoDeliveryCard = ({ delivery, orderId }: PathaoDeliveryCardProps) => {
             Delivery Status Timeline
           </Text>
           <Timeline
-            mode="left"
+            mode="start"
             items={delivery.statusHistory.map((history, index) => {
               const isLatest = index === delivery.statusHistory!.length - 1;
               const isFailed =
@@ -224,19 +224,19 @@ const PathaoDeliveryCard = ({ delivery, orderId }: PathaoDeliveryCardProps) => {
                     : isLatest
                       ? "blue"
                       : "gray",
-                dot: isFailed ? (
+                icon: isFailed ? (
                   <CloseCircleOutlined style={{ fontSize: 14 }} />
                 ) : isSuccess ? (
                   <CheckCircleOutlined style={{ fontSize: 14 }} />
                 ) : isLatest ? (
                   <ClockCircleOutlined style={{ fontSize: 14 }} />
                 ) : undefined,
-                label: (
+                title: (
                   <Text type="secondary" style={{ fontSize: 12 }}>
                     {new Date(history.createdAt).toLocaleString()}
                   </Text>
                 ),
-                children: (
+                content: (
                   <Tag
                     color={getDeliveryStatusColor(history.status)}
                     style={{ marginBottom: 4 }}

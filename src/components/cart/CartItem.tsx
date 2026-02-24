@@ -85,22 +85,27 @@ const CartItem = ({ item, isAuthenticated, onUpdate }: CartItemProps) => {
   const imageUrl = isDbItem(item)
     ? item.product.media[0]?.mediaUrl
     : item.imageUrl;
-
   let basePrice = item.priceSnapshot;
   let currentPrice = item.priceSnapshot;
 
   if (isDbItem(item)) {
+    // Selling price: variant.price → fallback to product.basePrice
     if (item.variant && item.variant.price !== null) {
       currentPrice = Number(item.variant.price);
     } else {
       currentPrice = Number(item.product.basePrice);
     }
 
-    if (
-      item.product.comparePrice &&
-      Number(item.product.comparePrice) > currentPrice
-    ) {
-      basePrice = Number(item.product.comparePrice);
+    // Compare price: variant.comparePrice → fallback to product.comparePrice
+    const effectiveComparePrice =
+      item.variant && item.variant.comparePrice !== null
+        ? Number(item.variant.comparePrice)
+        : item.product.comparePrice
+          ? Number(item.product.comparePrice)
+          : null;
+
+    if (effectiveComparePrice && effectiveComparePrice > currentPrice) {
+      basePrice = effectiveComparePrice;
     } else {
       basePrice = currentPrice;
     }

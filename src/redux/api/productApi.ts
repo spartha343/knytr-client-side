@@ -22,6 +22,22 @@ export const productApi = baseApi.injectEndpoints({
       providesTags: [tagTypes.product],
     }),
 
+    getVendorProducts: build.query({
+      query: (arg: Record<string, string | number | boolean>) => ({
+        url: `${PRODUCT_URL}/vendor/my-products`,
+        method: "GET",
+        params: arg,
+      }),
+      transformResponse: (response: {
+        data: unknown;
+        meta: { page: number; limit: number; total: number };
+      }) => ({
+        products: response.data,
+        meta: response.meta,
+      }),
+      providesTags: [tagTypes.product],
+    }),
+
     getProductById: build.query({
       query: (id: string) => ({
         url: `${PRODUCT_URL}/${id}`,
@@ -81,6 +97,7 @@ export const productApi = baseApi.injectEndpoints({
 
 export const {
   useGetAllProductsQuery,
+  useGetVendorProductsQuery,
   useGetProductByIdQuery,
   useGetProductsByStoreQuery,
   useCreateProductMutation,

@@ -179,7 +179,11 @@ Sync this once a month or whenever Pathao adds new areas."
 
             <Divider />
 
-            <Space direction="vertical" style={{ width: "100%" }} size="middle">
+            <Space
+              orientation="vertical"
+              style={{ width: "100%" }}
+              size="middle"
+            >
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 <Switch
                   checked={fullSync}
@@ -243,7 +247,11 @@ Sync this once a month or whenever Pathao adds new areas."
 
             <Divider />
 
-            <Space direction="vertical" style={{ width: "100%" }} size="middle">
+            <Space
+              orientation="vertical"
+              style={{ width: "100%" }}
+              size="middle"
+            >
               <div>
                 <Text>Batch size (zones per run):</Text>
                 <InputNumber

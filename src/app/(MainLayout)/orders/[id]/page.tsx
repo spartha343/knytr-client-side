@@ -50,7 +50,7 @@ const CustomerOrderDetailPage = () => {
     return (
       <div style={{ textAlign: "center", padding: "100px 20px" }}>
         <Alert
-          message="Please Log In"
+          title="Please Log In"
           description="You need to be logged in to view order details."
           type="warning"
           showIcon

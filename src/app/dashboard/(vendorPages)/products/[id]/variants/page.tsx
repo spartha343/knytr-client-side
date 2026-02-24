@@ -15,20 +15,27 @@ import {
   InputNumber,
   Tag,
   Popconfirm,
+  Switch,
 } from "antd";
 import {
   PlusOutlined,
   DeleteOutlined,
   ArrowLeftOutlined,
+  EditOutlined,
 } from "@ant-design/icons";
 import { useParams, useRouter } from "next/navigation";
 import { useGetProductByIdQuery } from "@/redux/api/productApi";
 import {
   useGetProductVariantsQuery,
   useCreateProductVariantMutation,
+  useUpdateProductVariantMutation,
   useDeleteProductVariantMutation,
 } from "@/redux/api/productVariantApi";
-import { IProduct, IProductVariant } from "@/types/product";
+import {
+  IProduct,
+  IProductVariant,
+  IUpdateProductVariantInput,
+} from "@/types/product";
 import { IAttributeValue } from "@/types/attribute";
 import Link from "next/link";
 
@@ -45,14 +52,23 @@ const ProductVariantsPage = () => {
 
   const [createVariant, { isLoading: isCreating }] =
     useCreateProductVariantMutation();
+  const [updateVariant, { isLoading: isUpdating }] =
+    useUpdateProductVariantMutation();
   const [deleteVariant] = useDeleteProductVariantMutation();
 
   const product = productData as IProduct;
   const variants = variantsData as IProductVariant[];
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [form] = Form.useForm();
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingVariant, setEditingVariant] = useState<IProductVariant | null>(
+    null,
+  );
 
+  const [createForm] = Form.useForm();
+  const [editForm] = Form.useForm();
+
+  // ── Create ─────────────────────────────────────────────────────────────────
   const handleCreateVariant = async (values: {
     sku: string;
     price: number;
@@ -60,19 +76,66 @@ const ProductVariantsPage = () => {
     attributeValueIds: string[];
   }) => {
     try {
-      const res = await createVariant({
-        productId,
-        ...values,
-      }).unwrap();
+      const res = await createVariant({ productId, ...values }).unwrap();
       message.success(res.message || "Variant created successfully!");
-      setIsModalOpen(false);
-      form.resetFields();
+      setIsCreateModalOpen(false);
+      createForm.resetFields();
     } catch (error: unknown) {
       const err = error as { data?: { message?: string } };
       message.error(err?.data?.message || "Failed to create variant");
     }
   };
 
+  // ── Edit ───────────────────────────────────────────────────────────────────
+  const handleOpenEditModal = (variant: IProductVariant) => {
+    setEditingVariant(variant);
+    editForm.setFieldsValue({
+      sku: variant.sku,
+      price:
+        variant.price !== null && variant.price !== undefined
+          ? Number(variant.price)
+          : undefined,
+      comparePrice:
+        variant.comparePrice !== null && variant.comparePrice !== undefined
+          ? Number(variant.comparePrice)
+          : null,
+      isActive: variant.isActive,
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditVariant = async (values: {
+    sku: string;
+    price: number;
+    comparePrice?: number;
+    isActive: boolean;
+  }) => {
+    if (!editingVariant) return;
+    try {
+      const updateData: IUpdateProductVariantInput = {
+        sku: values.sku,
+        price: values.price !== undefined ? Number(values.price) : undefined,
+        comparePrice:
+          values.comparePrice !== undefined && values.comparePrice !== null
+            ? Number(values.comparePrice)
+            : null,
+        isActive: values.isActive,
+      };
+      const res = await updateVariant({
+        id: editingVariant.id,
+        data: updateData,
+      }).unwrap();
+      message.success(res.message || "Variant updated successfully!");
+      setIsEditModalOpen(false);
+      setEditingVariant(null);
+      editForm.resetFields();
+    } catch (error: unknown) {
+      const err = error as { data?: { message?: string } };
+      message.error(err?.data?.message || "Failed to update variant");
+    }
+  };
+
+  // ── Delete ─────────────────────────────────────────────────────────────────
   const handleDelete = async (id: string) => {
     try {
       const res = await deleteVariant(id).unwrap();
@@ -116,11 +179,10 @@ const ProductVariantsPage = () => {
     },
     {
       title: "Price",
-      dataIndex: "price",
       key: "price",
-      render: (price: number, record: IProductVariant) => (
+      render: (record: IProductVariant) => (
         <div>
-          <div>${price}</div>
+          <div>৳{Number(record.price).toFixed(2)}</div>
           {record.comparePrice && (
             <div
               style={{
@@ -129,7 +191,7 @@ const ProductVariantsPage = () => {
                 textDecoration: "line-through",
               }}
             >
-              ${record.comparePrice}
+              ৳{Number(record.comparePrice).toFixed(2)}
             </div>
           )}
         </div>
@@ -159,6 +221,15 @@ const ProductVariantsPage = () => {
       key: "action",
       render: (record: IProductVariant) => (
         <Space orientation="vertical" size="small">
+          <Button
+            type="primary"
+            icon={<EditOutlined />}
+            size="small"
+            block
+            onClick={() => handleOpenEditModal(record)}
+          >
+            Edit
+          </Button>
           <Link
             href={`/dashboard/products/${productId}/variants/${record.id}/inventory`}
           >
@@ -168,6 +239,7 @@ const ProductVariantsPage = () => {
           </Link>
           <Popconfirm
             title="Delete this variant?"
+            description="This action cannot be undone."
             onConfirm={() => handleDelete(record.id)}
             okText="Yes"
             cancelText="No"
@@ -195,7 +267,7 @@ const ProductVariantsPage = () => {
           <Button
             type="primary"
             icon={<PlusOutlined />}
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => setIsCreateModalOpen(true)}
             disabled={
               !product.productAttributes ||
               product.productAttributes.length === 0
@@ -229,22 +301,28 @@ const ProductVariantsPage = () => {
               rowKey="id"
               pagination={false}
               loading={loadingVariants}
+              scroll={{ x: "max-content" }}
             />
           </>
         )}
       </Card>
 
+      {/* ── Create Modal ──────────────────────────────────────────────────── */}
       <Modal
         title="Create Product Variant"
-        open={isModalOpen}
+        open={isCreateModalOpen}
         onCancel={() => {
-          setIsModalOpen(false);
-          form.resetFields();
+          setIsCreateModalOpen(false);
+          createForm.resetFields();
         }}
         footer={null}
         width={600}
       >
-        <Form form={form} layout="vertical" onFinish={handleCreateVariant}>
+        <Form
+          form={createForm}
+          layout="vertical"
+          onFinish={handleCreateVariant}
+        >
           <Form.Item
             name="sku"
             label="SKU (Stock Keeping Unit)"
@@ -255,7 +333,7 @@ const ProductVariantsPage = () => {
 
           <Form.Item
             name="price"
-            label="Price ($)"
+            label="Selling Price (৳)"
             rules={[{ required: true, message: "Please enter price" }]}
           >
             <InputNumber
@@ -266,7 +344,33 @@ const ProductVariantsPage = () => {
             />
           </Form.Item>
 
-          <Form.Item name="comparePrice" label="Compare At Price ($)">
+          <Form.Item
+            name="comparePrice"
+            label="Compare At Price (৳) — Original / MRP"
+            dependencies={["price"]}
+            validateTrigger="onBlur"
+            rules={[
+              ({}) => ({
+                validator(_, value) {
+                  if (value === undefined || value === null) {
+                    return Promise.resolve();
+                  }
+                  const price = editForm.getFieldValue("price");
+                  if (price === undefined || price === null) {
+                    return Promise.resolve();
+                  }
+                  if (Number(value) > Number(price)) {
+                    return Promise.resolve();
+                  }
+                  return Promise.reject(
+                    new Error(
+                      "Compare price must be greater than the selling price",
+                    ),
+                  );
+                },
+              }),
+            ]}
+          >
             <InputNumber
               placeholder="0.00"
               style={{ width: "100%" }}
@@ -325,8 +429,107 @@ const ProductVariantsPage = () => {
               </Button>
               <Button
                 onClick={() => {
-                  setIsModalOpen(false);
-                  form.resetFields();
+                  setIsCreateModalOpen(false);
+                  createForm.resetFields();
+                }}
+              >
+                Cancel
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* ── Edit Modal ────────────────────────────────────────────────────── */}
+      <Modal
+        title={`Edit Variant — ${editingVariant?.sku ?? ""}`}
+        open={isEditModalOpen}
+        onCancel={() => {
+          setIsEditModalOpen(false);
+          setEditingVariant(null);
+          editForm.resetFields();
+        }}
+        footer={null}
+        width={600}
+      >
+        <Form form={editForm} layout="vertical" onFinish={handleEditVariant}>
+          {/* Read-only attributes info */}
+          {editingVariant?.variantAttributes &&
+            editingVariant.variantAttributes.length > 0 && (
+              <Form.Item label="Attributes (cannot be changed)">
+                <Space wrap>
+                  {editingVariant.variantAttributes.map((va) => (
+                    <Tag key={va.attributeValueId} color="blue">
+                      {va.attributeValue?.attribute?.name}:{" "}
+                      {va.attributeValue?.value}
+                    </Tag>
+                  ))}
+                </Space>
+              </Form.Item>
+            )}
+
+          <Form.Item
+            name="sku"
+            label="SKU (Stock Keeping Unit)"
+            rules={[{ required: true, message: "Please enter SKU" }]}
+          >
+            <Input placeholder="e.g., PROD-RED-L" />
+          </Form.Item>
+
+          <Form.Item
+            name="price"
+            label="Selling Price (৳)"
+            rules={[{ required: true, message: "Please enter price" }]}
+          >
+            <InputNumber
+              placeholder="0.00"
+              style={{ width: "100%" }}
+              min={0}
+              step={0.01}
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="comparePrice"
+            label="Compare At Price (৳) — Original / MRP"
+            dependencies={["price"]}
+            rules={[
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  if (!value || value > getFieldValue("price")) {
+                    return Promise.resolve();
+                  }
+                  return Promise.reject(
+                    new Error(
+                      "Compare price must be greater than the selling price",
+                    ),
+                  );
+                },
+              }),
+            ]}
+          >
+            <InputNumber
+              placeholder="0.00"
+              style={{ width: "100%" }}
+              min={0}
+              step={0.01}
+            />
+          </Form.Item>
+
+          <Form.Item name="isActive" label="Status" valuePropName="checked">
+            <Switch checkedChildren="Active" unCheckedChildren="Inactive" />
+          </Form.Item>
+
+          <Form.Item>
+            <Space>
+              <Button type="primary" htmlType="submit" loading={isUpdating}>
+                Save Changes
+              </Button>
+              <Button
+                onClick={() => {
+                  setIsEditModalOpen(false);
+                  setEditingVariant(null);
+                  editForm.resetFields();
                 }}
               >
                 Cancel

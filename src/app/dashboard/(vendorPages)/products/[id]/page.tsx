@@ -33,7 +33,7 @@ const ViewProductPage = () => {
 
   return (
     <div>
-      <Space style={{ marginBottom: 16 }}>
+      <Space style={{ marginBottom: 16 }} wrap>
         <Button icon={<ArrowLeftOutlined />} onClick={() => router.back()}>
           Back
         </Button>
@@ -67,12 +67,12 @@ const ViewProductPage = () => {
           </Descriptions.Item>
           <Descriptions.Item label="SKU/Slug">{product.slug}</Descriptions.Item>
           <Descriptions.Item label="Base Price">
-            ${product.basePrice}
+            ৳{product.basePrice}
           </Descriptions.Item>
           <Descriptions.Item label="Compare Price">
-            {product.comparePrice ? `$${product.comparePrice}` : "—"}
+            {product.comparePrice ? `৳${product.comparePrice}` : "—"}
           </Descriptions.Item>
-          <Descriptions.Item label="Status" span={2}>
+          <Descriptions.Item label="Status">
             <Space>
               <Tag color={product.isActive ? "green" : "red"}>
                 {product.isActive ? "Active" : "Inactive"}
@@ -83,7 +83,7 @@ const ViewProductPage = () => {
               {product.isFeatured && <Tag color="purple">Featured</Tag>}
             </Space>
           </Descriptions.Item>
-          <Descriptions.Item label="Description" span={2}>
+          <Descriptions.Item label="Description">
             {product.description || "—"}
           </Descriptions.Item>
         </Descriptions>
@@ -142,7 +142,7 @@ const ViewProductPage = () => {
                 marginBottom: 8,
               }}
             >
-              <strong>SKU:</strong> {variant.sku} | <strong>Price:</strong> $
+              <strong>SKU:</strong> {variant.sku} | <strong>Price:</strong> ৳
               {variant.price}
             </div>
           ))}

@@ -1,6 +1,9 @@
 import { tagTypes } from "../tag-types";
 import { baseApi } from "./baseApi";
-import { ICreateProductVariantInput } from "@/types/product";
+import {
+  ICreateProductVariantInput,
+  IUpdateProductVariantInput,
+} from "@/types/product";
 
 const VARIANT_URL = "/product-variants";
 
@@ -51,7 +54,7 @@ export const productVariantApi = baseApi.injectEndpoints({
         data,
       }: {
         id: string;
-        data: Partial<ICreateProductVariantInput>;
+        data: IUpdateProductVariantInput;
       }) => ({
         url: `${VARIANT_URL}/${id}`,
         method: "PATCH",

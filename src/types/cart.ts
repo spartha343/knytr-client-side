@@ -28,6 +28,7 @@ export interface ICartItem {
     id: string;
     sku: string;
     price: number | null;
+    comparePrice: number | null;
     imageUrl: string | null;
     variantAttributes: Array<{
       attributeValue: {

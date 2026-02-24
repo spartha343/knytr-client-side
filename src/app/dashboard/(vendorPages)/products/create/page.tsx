@@ -55,10 +55,18 @@ const CreateProductPage = () => {
 
   const onSubmit = async (data: ICreateProductInput) => {
     try {
+      const basePrice = Number(data.basePrice);
+      const comparePrice = data.comparePrice
+        ? Number(data.comparePrice)
+        : undefined;
+      if (comparePrice !== undefined && comparePrice <= basePrice) {
+        message.error("Compare price must be greater than base price");
+        return;
+      }
       const payload = {
         ...data,
-        basePrice: Number(data.basePrice),
-        comparePrice: data.comparePrice ? Number(data.comparePrice) : undefined,
+        basePrice,
+        comparePrice,
         weight: data.weight ? Number(data.weight) : undefined,
         length: data.length ? Number(data.length) : undefined,
         width: data.width ? Number(data.width) : undefined,

@@ -8,6 +8,7 @@ import {
   TagsOutlined,
   AppstoreAddOutlined,
   EnvironmentOutlined,
+  ShopOutlined,
 } from "@ant-design/icons";
 import Link from "next/link";
 import { ROLE, RoleType } from "@/types/authTypes";
@@ -15,6 +16,11 @@ import { ROLE, RoleType } from "@/types/authTypes";
 export const sidebarItems = (roles: RoleType[]): MenuProps["items"] => {
   // Items accessible by any logged-in user
   const commonItems: MenuProps["items"] = [
+    {
+      label: <Link href="/">Visit Store</Link>,
+      key: "/",
+      icon: <ShopOutlined />,
+    },
     {
       label: "Settings",
       key: "settings",

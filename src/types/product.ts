@@ -10,7 +10,7 @@ export interface IProduct {
   basePrice: number;
   comparePrice?: number;
   categoryId: string;
-  brandId: string;
+  brandId?: string | null;
   storeId: string;
   isActive: boolean;
   isPublished: boolean;
@@ -166,6 +166,14 @@ export interface ICreateProductVariantInput {
   comparePrice?: number;
   imageUrl?: string;
   attributeValueIds: string[];
+}
+
+export interface IUpdateProductVariantInput {
+  sku?: string;
+  price?: number;
+  comparePrice?: number | null;
+  imageUrl?: string | null;
+  isActive?: boolean;
 }
 
 export interface ICreateInventoryInput {

@@ -83,7 +83,7 @@ const ProductDetailPage = () => {
 
   const [addToCart, { isLoading: isAddingToCart }] = useAddToCartMutation();
 
-  // Get selected variant or use first variant
+  // Get selected variant — prefer explicitly selected, else first variant with stock, else first variant
   const selectedVariant = useMemo(() => {
     if (!product?.variants || product.variants.length === 0) return null;
     if (selectedVariantId) {
@@ -92,7 +92,16 @@ const ProductDetailPage = () => {
         product.variants[0]
       );
     }
-    return product.variants[0];
+    // Auto-select: find first variant that has stock
+    const firstInStock = product.variants.find((v) => {
+      if (!v.inventories || v.inventories.length === 0) return false;
+      const stock = v.inventories.reduce(
+        (total, inv) => total + (inv.quantity - inv.reservedQty),
+        0,
+      );
+      return stock > 0;
+    });
+    return firstInStock ?? product.variants[0];
   }, [product, selectedVariantId]);
 
   // Check if current variant is in cart
@@ -223,9 +232,16 @@ const ProductDetailPage = () => {
   }
 
   // Calculate current price
-  const currentPrice = selectedVariant?.price || product.basePrice;
+  const currentPrice =
+    selectedVariant?.price != null
+      ? Number(selectedVariant.price)
+      : Number(product.basePrice);
   const currentComparePrice =
-    selectedVariant?.comparePrice || product.comparePrice;
+    selectedVariant?.comparePrice != null
+      ? Number(selectedVariant.comparePrice)
+      : product.comparePrice != null
+        ? Number(product.comparePrice)
+        : null;
 
   return (
     <Container>

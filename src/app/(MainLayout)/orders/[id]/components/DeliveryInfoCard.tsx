@@ -36,25 +36,25 @@ const DeliveryInfoCard = ({
         </span>
       }
     >
-      <Descriptions column={{ xs: 1, sm: 1, md: 2 }} bordered>
-        <Descriptions.Item label="Delivery Location" span={2}>
+      <Descriptions column={1} bordered>
+        <Descriptions.Item label="Delivery Location">
           {getLocationTag(deliveryLocation)}
         </Descriptions.Item>
 
         {deliveryAddress && (
-          <Descriptions.Item label="Delivery Address" span={2}>
+          <Descriptions.Item label="Delivery Address">
             {deliveryAddress}
           </Descriptions.Item>
         )}
 
-        <Descriptions.Item label="Delivery Charge" span={2}>
+        <Descriptions.Item label="Delivery Charge">
           <span style={{ fontWeight: "bold", color: "#1890ff" }}>
             <DollarOutlined /> ৳{Number(deliveryCharge).toLocaleString()}
           </span>
         </Descriptions.Item>
 
         {specialInstructions && (
-          <Descriptions.Item label="Special Instructions" span={2}>
+          <Descriptions.Item label="Special Instructions">
             <div
               style={{
                 padding: "8px 12px",

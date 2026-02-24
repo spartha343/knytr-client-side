@@ -12,7 +12,12 @@ export const publicProductApi = publicApi.injectEndpoints({
       query: (arg = {}) => ({
         url: "/products",
         method: "GET",
-        params: { ...arg, isPublished: true, isActive: true },
+        params: {
+          ...arg,
+          isPublished: true,
+          isActive: true,
+          includeVariants: true,
+        },
       }),
       transformResponse: (response: IApiResponse<IProduct[]>) => ({
         products: response.data,

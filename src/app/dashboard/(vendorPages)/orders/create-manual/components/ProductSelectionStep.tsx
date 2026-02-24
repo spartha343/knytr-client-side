@@ -17,7 +17,7 @@ import {
   ShoppingOutlined,
   TagOutlined,
 } from "@ant-design/icons";
-import { useGetAllProductsQuery } from "@/redux/api/productApi";
+import { useGetVendorProductsQuery } from "@/redux/api/productApi";
 import { IProduct, IProductVariant } from "@/types/product";
 import type { IManualOrderWizardItem } from "@/types/order";
 
@@ -44,10 +44,13 @@ const ProductSelectionStep = ({
   const [customPrice, setCustomPrice] = useState<number | null>(null);
   const [itemCounter, setItemCounter] = useState(0);
 
-  const { data: productsResponse, isLoading } = useGetAllProductsQuery({
+  const { data: productsResponse, isLoading } = useGetVendorProductsQuery({
     storeId,
+    includeVariants: "true",
   });
-  const products = (productsResponse?.products as IProduct[]) || [];
+  const products = ((productsResponse?.products as IProduct[]) || []).filter(
+    (p) => p.isPublished && p.isActive,
+  );
 
   const selectedProduct = products.find(
     (p: IProduct) => p.id === selectedProductId,
@@ -61,12 +64,24 @@ const ProductSelectionStep = ({
       const variant = selectedProduct.variants.find(
         (v: IProductVariant) => v.id === selectedVariantId,
       );
-      return Number(variant?.price || 0);
+      return Number(variant?.price ?? selectedProduct.basePrice ?? 0);
     }
     return Number(selectedProduct.basePrice || 0);
   };
 
-  const getVariantDisplay = (variant: IProductVariant): string => variant.sku;
+  const getVariantDisplay = (variant: IProductVariant): string => {
+    if (variant.variantAttributes && variant.variantAttributes.length > 0) {
+      const attrs = variant.variantAttributes
+        .map((va) => {
+          const attrName = va.attributeValue?.attribute?.name || "";
+          const valName = va.attributeValue?.value || "";
+          return attrName ? `${attrName}: ${valName}` : valName;
+        })
+        .join(", ");
+      return `${variant.sku} (${attrs})`;
+    }
+    return variant.sku;
+  };
 
   const handleAddItem = () => {
     if (!selectedProductId || !selectedProduct) return;

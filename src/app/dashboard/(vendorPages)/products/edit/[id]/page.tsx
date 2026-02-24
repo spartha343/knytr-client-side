@@ -34,93 +34,42 @@ import {
   StarFilled,
   StarOutlined,
 } from "@ant-design/icons";
+
 const { Text } = Typography;
 
-const EditProductPage = () => {
+// ─── Inner form component — receives product as prop so useState initializes correctly ───
+const EditProductForm = ({ product }: { product: IProduct }) => {
   const router = useRouter();
-  const params = useParams();
-
-  const id = params?.id as string;
-
-  const { data: productData, isLoading: isFetching } = useGetProductByIdQuery(
-    id,
-    {
-      skip: !id,
-    },
-  );
   const [updateProduct, { isLoading: isUpdating }] = useUpdateProductMutation();
 
   const { data: categoriesData } = useGetAllCategoriesQuery({ limit: 100 });
   const { data: brandsData } = useGetAllBrandsQuery({ limit: 100 });
-
-  const product = productData as IProduct;
-  // Initialize with product data or defaults
-
   const { data: attributesData } = useGetAllAttributesQuery({
     limit: 100,
     isActive: true,
   });
+
   const attributes =
     (attributesData?.attributes as
       | { id: string; name: string; displayName?: string }[]
       | undefined) || [];
+
   const hasVariants = (product?.variants?.length ?? 0) > 0;
 
-  const [isActive, setIsActive] = useState<boolean>(
-    () => product?.isActive ?? true,
-  );
+  // ✅ These now initialize correctly because product is guaranteed to exist
+  const [isActive, setIsActive] = useState<boolean>(product.isActive ?? true);
   const [isPublished, setIsPublished] = useState<boolean>(
-    () => product?.isPublished ?? false,
+    product.isPublished ?? false,
   );
   const [isFeatured, setIsFeatured] = useState<boolean>(
-    () => product?.isFeatured ?? false,
+    product.isFeatured ?? false,
   );
-
   const [selectedAttributes, setSelectedAttributes] = useState<string[]>(
-    () =>
-      product?.productAttributes?.map(
-        (pa: { attributeId: string }) => pa.attributeId,
-      ) || [],
+    product.productAttributes?.map(
+      (pa: { attributeId: string }) => pa.attributeId,
+    ) || [],
   );
 
-  const onSubmit = async (data: IUpdateProductInput) => {
-    try {
-      const payload = {
-        ...data,
-        basePrice: data.basePrice ? Number(data.basePrice) : undefined,
-        comparePrice: data.comparePrice ? Number(data.comparePrice) : undefined,
-        weight: data.weight ? Number(data.weight) : undefined,
-        length: data.length ? Number(data.length) : undefined,
-        width: data.width ? Number(data.width) : undefined,
-        height: data.height ? Number(data.height) : undefined,
-        isActive,
-        isPublished,
-        isFeatured,
-        attributeIds: selectedAttributes,
-      };
-
-      const res = await updateProduct({ id, data: payload }).unwrap();
-      message.success(res.message || "Product updated successfully!");
-      router.push("/dashboard/products");
-    } catch (error: unknown) {
-      const err = error as { data?: { message?: string } };
-      message.error(err?.data?.message || "Failed to update product");
-    }
-  };
-
-  if (isFetching) {
-    return (
-      <div style={{ textAlign: "center", padding: "50px" }}>
-        <Spin size="large" />
-      </div>
-    );
-  }
-
-  if (!product) {
-    return <div>Product not found</div>;
-  }
-
-  // Prepare options
   const categoryOptions =
     (
       categoriesData?.categories as { id: string; name: string }[] | undefined
@@ -136,6 +85,46 @@ const EditProductPage = () => {
         value: brand.id,
       }),
     ) || [];
+
+  const onSubmit = async (data: IUpdateProductInput) => {
+    try {
+      const basePriceNum = data.basePrice
+        ? Number(data.basePrice)
+        : product.basePrice;
+      const comparePriceNum = data.comparePrice
+        ? Number(data.comparePrice)
+        : undefined;
+
+      if (comparePriceNum !== undefined && comparePriceNum <= basePriceNum) {
+        message.error("Compare price must be greater than base price");
+        return;
+      }
+      const payload = {
+        ...data,
+        basePrice: data.basePrice ? Number(data.basePrice) : undefined,
+        comparePrice: data.comparePrice ? Number(data.comparePrice) : undefined,
+        weight: data.weight ? Number(data.weight) : undefined,
+        length: data.length ? Number(data.length) : undefined,
+        width: data.width ? Number(data.width) : undefined,
+        height: data.height ? Number(data.height) : undefined,
+        isActive,
+        isPublished,
+        isFeatured,
+        ...(!hasVariants && { attributeIds: selectedAttributes }),
+        brandId: data.brandId || undefined,
+      };
+
+      const res = await updateProduct({
+        id: product.id,
+        data: payload,
+      }).unwrap();
+      message.success(res.message || "Product updated successfully!");
+      router.push("/dashboard/products");
+    } catch (error: unknown) {
+      const err = error as { data?: { message?: string } };
+      message.error(err?.data?.message || "Failed to update product");
+    }
+  };
 
   return (
     <div>
@@ -223,7 +212,7 @@ const EditProductPage = () => {
             <Col xs={24} md={12}>
               <FormInput
                 name="basePrice"
-                label="Base Price ($)"
+                label="Base Price (৳)"
                 placeholder="0.00"
                 type="number"
               />
@@ -232,7 +221,7 @@ const EditProductPage = () => {
             <Col xs={24} md={12}>
               <FormInput
                 name="comparePrice"
-                label="Compare At Price ($)"
+                label="Compare At Price (৳)"
                 placeholder="0.00"
                 type="number"
               />
@@ -244,7 +233,7 @@ const EditProductPage = () => {
           {hasVariants ? (
             <>
               <Alert
-                message="Attributes are locked"
+                title="Attributes are locked"
                 description="This product already has variants. Delete all variants first to change attributes."
                 type="warning"
                 showIcon
@@ -375,7 +364,6 @@ const EditProductPage = () => {
           </Row>
         </Card>
 
-        {/* Publishing Settings */}
         <Card title="⚙️ Publishing Settings" style={{ marginBottom: 16 }}>
           <Row gutter={[24, 24]}>
             <Col xs={24} md={8}>
@@ -450,6 +438,34 @@ const EditProductPage = () => {
       </Form>
     </div>
   );
+};
+
+// ─── Outer shell — handles loading state, then mounts inner form with guaranteed product data ───
+const EditProductPage = () => {
+  const params = useParams();
+  const id = params?.id as string;
+
+  const { data: productData, isLoading: isFetching } = useGetProductByIdQuery(
+    id,
+    { skip: !id },
+  );
+
+  const product = productData as IProduct;
+
+  if (isFetching) {
+    return (
+      <div style={{ textAlign: "center", padding: "50px" }}>
+        <Spin size="large" />
+      </div>
+    );
+  }
+
+  if (!product) {
+    return <div>Product not found</div>;
+  }
+
+  // ✅ Key ensures EditProductForm remounts fresh if product id ever changes
+  return <EditProductForm key={product.id} product={product} />;
 };
 
 export default EditProductPage;

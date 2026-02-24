@@ -13,7 +13,7 @@ import Link from "next/link";
 import KTable from "@/components/ui/KTable";
 import ActionBar from "@/components/ui/ActionBar";
 import {
-  useGetAllProductsQuery,
+  useGetVendorProductsQuery,
   useDeleteProductMutation,
 } from "@/redux/api/productApi";
 import { IProduct } from "@/types/product";
@@ -26,7 +26,7 @@ const ProductsPage = () => {
 
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
-  const { data, isLoading } = useGetAllProductsQuery({
+  const { data, isLoading } = useGetVendorProductsQuery({
     page,
     limit: size,
     searchTerm: debouncedSearchTerm,

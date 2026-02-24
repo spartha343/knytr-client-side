@@ -153,6 +153,7 @@ const VendorOrderDetailPage = () => {
         currentStatus={order.status}
         orderId={order.id}
         hasPathaoDelivery={hasPathaoDelivery}
+        order={order}
         onClose={() => setIsModalOpen(false)}
       />
 
@@ -164,16 +165,18 @@ const VendorOrderDetailPage = () => {
         onClose={() => setIsCancelModalOpen(false)}
       />
 
-      <BookPathaoDeliveryModal
-        isOpen={isPathaoModalOpen}
-        orderId={order.id}
-        orderNumber={order.orderNumber}
-        currentCityId={order.recipientCityId}
-        currentZoneId={order.recipientZoneId}
-        currentAreaId={order.recipientAreaId}
-        onClose={() => setIsPathaoModalOpen(false)}
-        onSuccess={() => setIsPathaoModalOpen(false)}
-      />
+      {isPathaoModalOpen && (
+        <BookPathaoDeliveryModal
+          isOpen={isPathaoModalOpen}
+          orderId={order.id}
+          orderNumber={order.orderNumber}
+          currentCityId={order.recipientCityId}
+          currentZoneId={order.recipientZoneId}
+          currentAreaId={order.recipientAreaId}
+          onClose={() => setIsPathaoModalOpen(false)}
+          onSuccess={() => setIsPathaoModalOpen(false)}
+        />
+      )}
 
       {/* Edit Order Modal */}
       <EditOrderModal

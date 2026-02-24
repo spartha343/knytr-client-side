@@ -161,7 +161,7 @@ const OrderStatusTimeline = ({
 
     return {
       title: ORDER_STATUS_LABELS[status],
-      description: getActivityTime(status, activities, createdAt),
+      content: getActivityTime(status, activities, createdAt),
       status: isPast
         ? ("finish" as const)
         : isCurrent
@@ -178,7 +178,7 @@ const OrderStatusTimeline = ({
           const isLast = index === pathaoDelivery.statusHistory!.length - 1;
           return {
             title: PATHAO_STATUS_LABELS[entry.status] || entry.status,
-            description: formatTime(entry.createdAt),
+            content: formatTime(entry.createdAt),
             status:
               isLast &&
               entry.status !== "DELIVERED" &&
@@ -192,7 +192,7 @@ const OrderStatusTimeline = ({
         ? [
             {
               title: "Delivery Booked",
-              description: null,
+              content: null,
               status: "process" as const,
               icon: <SyncOutlined spin />,
             },
@@ -237,7 +237,7 @@ const OrderStatusTimeline = ({
       {/* Vendor-managed steps */}
       <Steps
         items={vendorSteps}
-        direction="vertical"
+        orientation="vertical"
         style={{ marginBottom: pathaoDelivery ? 8 : 16 }}
       />
 
@@ -263,7 +263,7 @@ const OrderStatusTimeline = ({
           </div>
           <Steps
             items={pathaoSteps}
-            direction="vertical"
+            orientation="vertical"
             style={{ marginBottom: 16 }}
           />
         </>

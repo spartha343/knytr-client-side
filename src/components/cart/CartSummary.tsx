@@ -33,12 +33,16 @@ const CartSummary = ({ items }: CartSummaryProps) => {
         currentPrice = Number(item.product.basePrice);
       }
 
-      // Get original price (for discount calculation)
-      if (
-        item.product.comparePrice &&
-        Number(item.product.comparePrice) > currentPrice
-      ) {
-        basePrice = Number(item.product.comparePrice);
+      // Compare price: variant.comparePrice → fallback to product.comparePrice
+      const effectiveComparePrice =
+        item.variant && item.variant.comparePrice !== null
+          ? Number(item.variant.comparePrice)
+          : item.product.comparePrice
+            ? Number(item.product.comparePrice)
+            : null;
+
+      if (effectiveComparePrice && effectiveComparePrice > currentPrice) {
+        basePrice = effectiveComparePrice;
       } else {
         basePrice = currentPrice;
       }

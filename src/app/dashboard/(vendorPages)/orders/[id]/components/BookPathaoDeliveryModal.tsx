@@ -27,9 +27,9 @@ const BookPathaoDeliveryModal = ({
   onClose,
   onSuccess,
 }: BookPathaoDeliveryModalProps) => {
-  const [cityId, setCityId] = useState<number | null>(currentCityId || null);
-  const [zoneId, setZoneId] = useState<number | null>(currentZoneId || null);
-  const [areaId, setAreaId] = useState<number | null>(currentAreaId || null);
+  const [cityId, setCityId] = useState<number | null>(currentCityId ?? null);
+  const [zoneId, setZoneId] = useState<number | null>(currentZoneId ?? null);
+  const [areaId, setAreaId] = useState<number | null>(currentAreaId ?? null);
 
   const [createDelivery, { isLoading: isCreatingDelivery }] =
     useCreateDeliveryMutation();
@@ -84,6 +84,7 @@ const BookPathaoDeliveryModal = ({
           <RocketOutlined /> Book Pathao Delivery
         </span>
       }
+      key={isOpen ? "open" : "closed"}
       open={isOpen}
       onCancel={handleClose}
       width={600}

@@ -12,7 +12,11 @@ import {
   Space,
   Typography,
 } from "antd";
-import { ShoppingCartOutlined, ShopOutlined } from "@ant-design/icons";
+import {
+  ShoppingCartOutlined,
+  ShopOutlined,
+  ArrowLeftOutlined,
+} from "@ant-design/icons";
 import { useRouter } from "next/navigation";
 import Form from "@/components/Forms/Form";
 import FormInput from "@/components/Forms/FormInput";
@@ -148,11 +152,18 @@ const CheckoutPage = () => {
             ? Number(dbItem.variant.price)
             : Number(dbItem.product.basePrice);
 
-          // Original price (for discount calculation)
+          // ✅ CORRECT — variant.comparePrice first, product.comparePrice as fallback
+          const effectiveComparePrice =
+            dbItem.variant?.comparePrice !== null &&
+            dbItem.variant?.comparePrice !== undefined
+              ? Number(dbItem.variant.comparePrice)
+              : dbItem.product.comparePrice
+                ? Number(dbItem.product.comparePrice)
+                : null;
+
           const basePrice =
-            dbItem.product.comparePrice &&
-            Number(dbItem.product.comparePrice) > currentPrice
-              ? Number(dbItem.product.comparePrice)
+            effectiveComparePrice && effectiveComparePrice > currentPrice
+              ? effectiveComparePrice
               : currentPrice;
 
           subtotal += currentPrice * dbItem.quantity;
@@ -306,7 +317,21 @@ const CheckoutPage = () => {
 
   return (
     <div style={{ padding: "24px", maxWidth: 1200, margin: "0 auto" }}>
-      <Title level={2}>Checkout</Title>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          marginBottom: 24,
+        }}
+      >
+        <Button icon={<ArrowLeftOutlined />} onClick={() => router.back()}>
+          Back to Cart
+        </Button>
+        <Title level={2} style={{ margin: 0 }}>
+          Checkout
+        </Title>
+      </div>
 
       {storeGroups.length > 1 && (
         <div
@@ -458,9 +483,13 @@ const CheckoutPage = () => {
                       const price = dbItem.variant?.price
                         ? Number(dbItem.variant.price)
                         : Number(dbItem.product.basePrice);
-                      const comparePrice = dbItem.product.comparePrice
-                        ? Number(dbItem.product.comparePrice)
-                        : 0;
+                      const comparePrice =
+                        dbItem.variant?.comparePrice !== null &&
+                        dbItem.variant?.comparePrice !== undefined
+                          ? Number(dbItem.variant.comparePrice)
+                          : dbItem.product.comparePrice
+                            ? Number(dbItem.product.comparePrice)
+                            : 0;
                       const discount =
                         comparePrice > price ? comparePrice - price : 0;
                       const variantName = dbItem.variant?.variantAttributes
