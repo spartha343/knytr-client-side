@@ -90,27 +90,43 @@ const ProductSelectionStep = ({
     const originalPrice = getPrice();
     const finalPrice = customPrice !== null ? customPrice : originalPrice;
 
-    const variantSku =
-      hasVariants && selectedVariantId && selectedProduct.variants
-        ? selectedProduct.variants.find(
-            (v: IProductVariant) => v.id === selectedVariantId,
-          )?.sku
-        : null;
+    // Check if same product+variant already exists → merge quantity instead of duplicating
+    const existingIndex = items.findIndex(
+      (item) =>
+        item.productId === selectedProductId &&
+        item.variantId === selectedVariantId,
+    );
 
-    const newItem: IManualOrderWizardItem = {
-      id: `${selectedProductId}-${selectedVariantId || "base"}-${itemCounter}`,
-      productId: selectedProductId,
-      productName: selectedProduct.name,
-      variantId: selectedVariantId,
-      variantSku,
-      originalPrice,
-      price: finalPrice,
-      quantity,
-      subtotal: finalPrice * quantity,
-    };
+    if (existingIndex !== -1) {
+      const updated = items.map((item, index) => {
+        if (index !== existingIndex) return item;
+        const newQty = item.quantity + quantity;
+        return { ...item, quantity: newQty, subtotal: item.price * newQty };
+      });
+      onItemsChange(updated);
+    } else {
+      const variantSku =
+        hasVariants && selectedVariantId && selectedProduct.variants
+          ? selectedProduct.variants.find(
+              (v: IProductVariant) => v.id === selectedVariantId,
+            )?.sku
+          : null;
 
-    onItemsChange([...items, newItem]);
-    setItemCounter(itemCounter + 1);
+      const newItem: IManualOrderWizardItem = {
+        id: `${selectedProductId}-${selectedVariantId || "base"}-${itemCounter}`,
+        productId: selectedProductId,
+        productName: selectedProduct.name,
+        variantId: selectedVariantId,
+        variantSku,
+        originalPrice,
+        price: finalPrice,
+        quantity,
+        subtotal: finalPrice * quantity,
+      };
+
+      onItemsChange([...items, newItem]);
+      setItemCounter(itemCounter + 1);
+    }
 
     // Reset form
     setSelectedProductId(null);

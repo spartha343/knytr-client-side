@@ -80,44 +80,53 @@ const FeaturedProducts = () => {
     setAddingProductId(product.id);
 
     try {
+      // Pick first in-stock variant, fallback to first variant if all out of stock
+      const getFirstInStockVariant = () => {
+        if (!product.variants || product.variants.length === 0) return null;
+        const inStockVariant = product.variants.find(
+          (v) =>
+            v.isActive &&
+            v.inventories &&
+            v.inventories.some((inv) => inv.quantity - inv.reservedQty > 0),
+        );
+        return inStockVariant || product.variants[0];
+      };
+
       if (isAuthenticated) {
-        // Get first variant if product has variants
-        const variantId =
-          product.variants && product.variants.length > 0
-            ? product.variants[0].id
-            : undefined;
+        const bestVariant = getFirstInStockVariant();
 
         // Add to DB cart
         await addToCart({
           productId: product.id,
-          variantId,
+          variantId: bestVariant?.id,
           quantity: 1,
         }).unwrap();
         message.success("Added to cart!");
       } else {
         // Add to guest cart with full product info
         const imageUrl = getProductImage(product);
-        const firstVariant = product.variants?.[0];
+        const bestVariant = getFirstInStockVariant();
 
         GuestCartManager.add({
           productId: product.id,
-          variantId: firstVariant?.id,
+          variantId: bestVariant?.id,
           quantity: 1,
-          priceSnapshot: firstVariant?.price
-            ? Number(firstVariant.price)
+          priceSnapshot: bestVariant?.price
+            ? Number(bestVariant.price)
             : Number(product.basePrice),
           productName: product.name,
           productSlug: product.slug,
           storeId: product.store?.id || product.storeId,
           storeName: product.store?.name || "Unknown Store",
           storeSlug: product.store?.slug || "unknown",
-          imageUrl: firstVariant?.imageUrl || imageUrl || undefined,
-          comparePrice: firstVariant?.comparePrice
-            ? Number(firstVariant.comparePrice)
-            : product.comparePrice
-              ? Number(product.comparePrice)
-              : undefined,
-          variantName: firstVariant?.variantAttributes
+          imageUrl: bestVariant?.imageUrl || imageUrl || undefined,
+          comparePrice:
+            bestVariant?.comparePrice != null
+              ? Number(bestVariant.comparePrice)
+              : product.comparePrice != null
+                ? Number(product.comparePrice)
+                : undefined,
+          variantName: bestVariant?.variantAttributes
             ?.map((va) => va.attributeValue?.value)
             .filter(Boolean)
             .join(", "),

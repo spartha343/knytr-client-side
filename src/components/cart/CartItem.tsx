@@ -218,6 +218,29 @@ const CartItem = ({ item, isAuthenticated, onUpdate }: CartItemProps) => {
               {productName}
             </h3>
 
+            {isDbItem(item) &&
+              item.variant?.variantAttributes &&
+              item.variant.variantAttributes.length > 0 && (
+                <div
+                  style={{
+                    fontSize: "12px",
+                    color: "#888",
+                    marginBottom: "4px",
+                  }}
+                >
+                  {item.variant.variantAttributes
+                    .map((va) => va.attributeValue.value)
+                    .join(" / ")}
+                </div>
+              )}
+            {!isDbItem(item) && item.variantName && (
+              <div
+                style={{ fontSize: "12px", color: "#888", marginBottom: "4px" }}
+              >
+                {item.variantName}
+              </div>
+            )}
+
             <div style={{ marginBottom: "4px" }}>
               <span
                 style={{
@@ -361,6 +384,26 @@ const CartItem = ({ item, isAuthenticated, onUpdate }: CartItemProps) => {
           >
             {productName}
           </h3>
+
+          {/* Variant Name */}
+          {isDbItem(item) &&
+            item.variant?.variantAttributes &&
+            item.variant.variantAttributes.length > 0 && (
+              <div
+                style={{ fontSize: "12px", color: "#888", marginBottom: "4px" }}
+              >
+                {item.variant.variantAttributes
+                  .map((va) => va.attributeValue.value)
+                  .join(" / ")}
+              </div>
+            )}
+          {!isDbItem(item) && item.variantName && (
+            <div
+              style={{ fontSize: "12px", color: "#888", marginBottom: "4px" }}
+            >
+              {item.variantName}
+            </div>
+          )}
 
           {/* Price */}
           <div style={{ marginBottom: "6px" }}>

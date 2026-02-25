@@ -271,24 +271,41 @@ export default function EditOrderModal({
     }
 
     const variant = product.variants?.find((v) => v.id === pendingVariantId);
-    const price = getEffectivePrice(variant, product);
-    const variantName = variant
-      ? variant.variantAttributes
-          .map((va) => va.attributeValue.value)
-          .join(" / ")
-      : undefined;
 
-    const newItem: EditOrderItem = {
-      productId: product.id,
-      variantId: variant?.id,
-      quantity: 1,
-      price,
-      productName: product.name,
-      variantName,
-      availableVariants: product.variants ?? [],
-    };
+    // Check if same productId + variantId already exists → merge quantity
+    const existingIndex = items.findIndex(
+      (item) =>
+        item.productId === pendingProductId &&
+        (item.variantId ?? null) === (pendingVariantId ?? null),
+    );
 
-    setItems([...items, newItem]);
+    if (existingIndex !== -1) {
+      // Merge: increment quantity of existing item
+      const newItems = [...items];
+      newItems[existingIndex].quantity += 1;
+      setItems(newItems);
+      message.info("Item already in order — quantity increased by 1");
+    } else {
+      const price = getEffectivePrice(variant, product);
+      const variantName = variant
+        ? variant.variantAttributes
+            .map((va) => va.attributeValue.value)
+            .join(" / ")
+        : undefined;
+
+      const newItem: EditOrderItem = {
+        productId: product.id,
+        variantId: variant?.id,
+        quantity: 1,
+        price,
+        productName: product.name,
+        variantName,
+        availableVariants: product.variants ?? [],
+      };
+
+      setItems([...items, newItem]);
+    }
+
     setPendingProductId(undefined);
     setPendingVariantId(undefined);
   };
@@ -460,9 +477,7 @@ export default function EditOrderModal({
   const canEdit = order.status === OrderStatus.PENDING;
 
   const products = productsData?.products as IProduct[] | undefined;
-  const addableProducts = products?.filter(
-    (p) => !items.some((item) => item.productId === p.id),
-  );
+  const addableProducts = products;
 
   return (
     <Modal
@@ -629,7 +644,9 @@ export default function EditOrderModal({
         <Table
           dataSource={items}
           columns={columns}
-          rowKey={(record, index) => `${record.productId}-${index}`}
+          rowKey={(record) =>
+            `${record.productId}-${record.variantId ?? "base"}`
+          }
           pagination={false}
           size="small"
           style={{ marginBottom: 16 }}
