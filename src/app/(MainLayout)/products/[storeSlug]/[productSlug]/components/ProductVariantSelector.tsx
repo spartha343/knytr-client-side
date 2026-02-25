@@ -36,6 +36,15 @@ export const ProductVariantSelector = ({
     return null;
   }
 
+  // Hide selector if only one variant with no attributes (default variant)
+  if (
+    variants.length === 1 &&
+    (!variants[0].variantAttributes ||
+      variants[0].variantAttributes.length === 0)
+  ) {
+    return null;
+  }
+
   return (
     <div style={{ marginBottom: "24px" }}>
       <Text strong style={{ display: "block", marginBottom: "12px" }}>

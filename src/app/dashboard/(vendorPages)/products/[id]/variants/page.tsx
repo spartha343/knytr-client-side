@@ -268,43 +268,34 @@ const ProductVariantsPage = () => {
             type="primary"
             icon={<PlusOutlined />}
             onClick={() => setIsCreateModalOpen(true)}
-            disabled={
-              !product.productAttributes ||
-              product.productAttributes.length === 0
-            }
           >
             Create Variant
           </Button>
         }
       >
-        {!product.productAttributes ||
-        product.productAttributes.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "40px", color: "#888" }}>
-            <p>This product has no attributes configured.</p>
-            <p>Please edit the product and add attributes first.</p>
-          </div>
-        ) : (
-          <>
-            <div style={{ marginBottom: 16 }}>
-              <strong>Available Attributes:</strong>{" "}
-              {product.productAttributes.map((pa) => (
-                <Tag key={pa.attributeId} color="blue" style={{ margin: 4 }}>
-                  {pa.attribute?.name} ({pa.attribute?.values?.length || 0}{" "}
-                  values)
-                </Tag>
-              ))}
-            </div>
+        <>
+          {product.productAttributes &&
+            product.productAttributes.length > 0 && (
+              <div style={{ marginBottom: 16 }}>
+                <strong>Available Attributes:</strong>{" "}
+                {product.productAttributes.map((pa) => (
+                  <Tag key={pa.attributeId} color="blue" style={{ margin: 4 }}>
+                    {pa.attribute?.name} ({pa.attribute?.values?.length || 0}{" "}
+                    values)
+                  </Tag>
+                ))}
+              </div>
+            )}
 
-            <Table
-              columns={columns}
-              dataSource={variants || []}
-              rowKey="id"
-              pagination={false}
-              loading={loadingVariants}
-              scroll={{ x: "max-content" }}
-            />
-          </>
-        )}
+          <Table
+            columns={columns}
+            dataSource={variants || []}
+            rowKey="id"
+            pagination={false}
+            loading={loadingVariants}
+            scroll={{ x: "max-content" }}
+          />
+        </>
       </Card>
 
       {/* ── Create Modal ──────────────────────────────────────────────────── */}
@@ -379,48 +370,42 @@ const ProductVariantsPage = () => {
             />
           </Form.Item>
 
-          <Form.Item
-            name="attributeValueIds"
-            label="Attribute Values"
-            rules={[
-              {
-                required: true,
-                message: "Please select at least one attribute value",
-              },
-            ]}
-          >
-            <Select
-              mode="multiple"
-              placeholder="Select attribute values"
-              style={{ width: "100%" }}
-            >
-              {product.productAttributes?.map((pa) => (
-                <Select.OptGroup
-                  key={pa.attributeId}
-                  label={pa.attribute?.name}
+          {product.productAttributes &&
+            product.productAttributes.length > 0 && (
+              <Form.Item name="attributeValueIds" label="Attribute Values">
+                <Select
+                  mode="multiple"
+                  placeholder="Select attribute values"
+                  style={{ width: "100%" }}
                 >
-                  {pa.attribute?.values?.map((val: IAttributeValue) => (
-                    <Select.Option key={val.id} value={val.id}>
-                      {val.value}
-                      {val.colorCode && (
-                        <span
-                          style={{
-                            display: "inline-block",
-                            width: 16,
-                            height: 16,
-                            backgroundColor: val.colorCode,
-                            border: "1px solid #ddd",
-                            marginLeft: 8,
-                            borderRadius: 2,
-                          }}
-                        />
-                      )}
-                    </Select.Option>
+                  {product.productAttributes?.map((pa) => (
+                    <Select.OptGroup
+                      key={pa.attributeId}
+                      label={pa.attribute?.name}
+                    >
+                      {pa.attribute?.values?.map((val: IAttributeValue) => (
+                        <Select.Option key={val.id} value={val.id}>
+                          {val.value}
+                          {val.colorCode && (
+                            <span
+                              style={{
+                                display: "inline-block",
+                                width: 16,
+                                height: 16,
+                                backgroundColor: val.colorCode,
+                                border: "1px solid #ddd",
+                                marginLeft: 8,
+                                borderRadius: 2,
+                              }}
+                            />
+                          )}
+                        </Select.Option>
+                      ))}
+                    </Select.OptGroup>
                   ))}
-                </Select.OptGroup>
-              ))}
-            </Select>
-          </Form.Item>
+                </Select>
+              </Form.Item>
+            )}
 
           <Form.Item>
             <Space>
