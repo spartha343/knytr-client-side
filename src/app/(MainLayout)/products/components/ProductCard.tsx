@@ -151,16 +151,17 @@ const ProductCard = ({ product }: ProductCardProps) => {
     <Card
       hoverable
       styles={{
-        body: { padding: "12px" },
+        body: { padding: "8px" },
       }}
       cover={
         <Link href={`/products/${product.store?.slug}/${product.slug}`}>
           <div
             style={{
-              height: "180px",
+              height: "clamp(120px, 30vw, 180px)",
               position: "relative",
               overflow: "hidden",
-              borderRadius: "8px 8px 0 0",
+              borderRadius: "8px 8px 4px 4px",
+              isolation: "isolate",
             }}
           >
             {imageUrl ? (
@@ -169,7 +170,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
                 alt={product.name}
                 fill
                 sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-                style={{ objectFit: "cover", borderRadius: "8px 8px 0 0" }}
+                style={{ objectFit: "cover", borderRadius: "8px 8px 4px 4px" }}
               />
             ) : (
               <div
@@ -180,7 +181,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
                   alignItems: "center",
                   justifyContent: "center",
                   color: "#999",
-                  borderRadius: "8px 8px 0 0",
+                  borderRadius: "8px 8px 4px 4px",
                 }}
               >
                 No Image
@@ -195,53 +196,67 @@ const ProductCard = ({ product }: ProductCardProps) => {
           title={
             <div
               style={{
-                height: "24px",
+                height: "20px",
                 overflow: "hidden",
-                fontSize: "17px",
+                fontSize: "clamp(13px, 3vw, 17px)",
                 lineHeight: "20px",
-                marginBottom: "6px",
+                marginBottom: "4px",
               }}
             >
               {product.name}
             </div>
           }
           description={
-            <div style={{ marginBottom: "12px", minHeight: "46px" }}>
-              <Text strong style={{ fontSize: "18px", color: "#1890ff" }}>
-                ৳{product.basePrice.toLocaleString()}
-              </Text>
-              {product.comparePrice &&
-              product.comparePrice > product.basePrice ? (
-                <>
-                  <br />
-                  <Text delete style={{ color: "#999", fontSize: "14px" }}>
+            <div style={{ height: "44px", marginBottom: "8px" }}>
+              <div>
+                <Text
+                  strong
+                  style={{
+                    fontSize: "clamp(13px, 3.5vw, 18px)",
+                    color: "#1890ff",
+                  }}
+                >
+                  ৳{product.basePrice.toLocaleString()}
+                </Text>
+                {product.comparePrice &&
+                product.comparePrice > product.basePrice ? (
+                  <Text
+                    delete
+                    style={{
+                      color: "#999",
+                      fontSize: "clamp(11px, 2.5vw, 14px)",
+                      marginLeft: "4px",
+                    }}
+                  >
                     ৳{product.comparePrice.toLocaleString()}
                   </Text>
+                ) : null}
+              </div>
+              <div style={{ height: "18px" }}>
+                {product.comparePrice &&
+                product.comparePrice > product.basePrice ? (
                   <Text
                     style={{
                       color: "#52c41a",
-                      marginLeft: "8px",
-                      fontSize: "12px",
+                      fontSize: "clamp(10px, 2.5vw, 12px)",
                     }}
                   >
                     Save {discount}%
                   </Text>
-                </>
-              ) : (
-                <div style={{ height: "22px" }}></div>
-              )}
+                ) : null}
+              </div>
             </div>
           }
         />
       </Link>
 
       {/* Buttons in Grid Layout */}
-      <Row gutter={[8, 8]}>
-        <Col span={24}>
+      <Row gutter={[6, 6]}>
+        <Col span={16}>
           <Button
             type={isInCart ? "primary" : "default"}
             block
-            size="middle"
+            size="small"
             icon={isInCart ? <CheckOutlined /> : <ShoppingCartOutlined />}
             onClick={handleAddToCart}
             loading={isLoading}
@@ -249,21 +264,20 @@ const ProductCard = ({ product }: ProductCardProps) => {
               backgroundColor: isInCart ? "#52c41a" : undefined,
               borderColor: isInCart ? "#52c41a" : undefined,
               color: isInCart ? "#fff" : undefined,
+              fontSize: "clamp(11px, 2.5vw, 14px)",
             }}
           >
-            {isInCart ? "Go to Cart" : "Add to Cart"}
+            {isInCart ? "In Cart" : "Add"}
           </Button>
         </Col>
-        <Col span={24}>
+        <Col span={8}>
           <Button
             type="default"
             block
-            size="middle"
+            size="small"
             icon={<HeartOutlined />}
             onClick={handleAddToWishlist}
-          >
-            Wishlist
-          </Button>
+          />
         </Col>
       </Row>
     </Card>

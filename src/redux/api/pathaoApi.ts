@@ -145,7 +145,7 @@ export const pathaoApi = baseApi.injectEndpoints({
       query: (params) => ({
         url: `/pathao/sync-locations`,
         method: "POST",
-        body: params,
+        data: params,
       }),
       invalidatesTags: [tagTypes.pathao],
     }),
@@ -165,7 +165,7 @@ export const pathaoApi = baseApi.injectEndpoints({
       query: (params) => ({
         url: `/pathao/sync-areas-batch`,
         method: "POST",
-        body: params,
+        data: params,
       }),
       invalidatesTags: [tagTypes.pathao],
     }),

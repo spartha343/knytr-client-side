@@ -62,8 +62,8 @@ export default function CredentialsForm({
 
       <Alert
         title="Security Note"
-        description="Your password is encrypted and never displayed after saving. You'll need to re-enter it when
-updating credentials."
+        description="Your credentials are stored securely. When updating, leave the password blank to keep your
+existing password."
         type="info"
         showIcon
         className="mb-4"

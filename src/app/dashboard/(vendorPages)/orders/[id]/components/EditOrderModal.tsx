@@ -52,6 +52,7 @@ interface IVariant {
   imageUrl: string | null;
   isActive: boolean;
   variantAttributes: IVariantAttribute[];
+  inventories: { quantity: number; reservedQty: number }[];
 }
 
 // Product shape with full variants
@@ -90,7 +91,9 @@ function getVariantLabel(variant: IVariant): string {
     .join(" / ");
   const price =
     variant.price != null ? `৳${Number(variant.price).toFixed(2)}` : "";
-  return attrs ? `${attrs} — ${price}` : `${variant.sku} — ${price}`;
+  const stockLabel = getStockLabel(variant);
+  const base = attrs ? `${attrs} — ${price}` : `${variant.sku} — ${price}`;
+  return `${base} · ${stockLabel}`;
 }
 
 // Helper: get effective price for a variant (variant.price ?? product.basePrice)
@@ -100,6 +103,23 @@ function getEffectivePrice(
 ): number {
   if (variant && variant.price != null) return Number(variant.price);
   return Number(product.basePrice);
+}
+
+// Helper: compute total available stock across all branches
+function getAvailableStock(variant: IVariant): number {
+  if (!variant.inventories || variant.inventories.length === 0) return 0;
+  return variant.inventories.reduce(
+    (sum, inv) => sum + (inv.quantity - inv.reservedQty),
+    0,
+  );
+}
+
+// Helper: get stock label for display in variant selector
+function getStockLabel(variant: IVariant): string {
+  const stock = getAvailableStock(variant);
+  if (stock <= 0) return "Out of stock";
+  if (stock <= 10) return `Only ${stock} left`;
+  return `${stock} in stock`;
 }
 
 export default function EditOrderModal({
@@ -212,10 +232,29 @@ export default function EditOrderModal({
     [subtotal, deliveryCharge],
   );
 
-  // Handle quantity change
   const handleQuantityChange = (index: number, newQuantity: number) => {
     if (newQuantity < 1) return;
     const newItems = [...items];
+    const item = newItems[index];
+
+    // Cap at available stock
+    const selectedVariant = item.availableVariants?.find(
+      (v) => v.id === item.variantId,
+    );
+    if (selectedVariant) {
+      const maxQty = getAvailableStock(selectedVariant);
+      if (newQuantity > maxQty) {
+        message.warning(
+          `Only ${maxQty} unit${maxQty !== 1 ? "s" : ""} available for "${
+            item.variantName ?? item.productName
+          }". Quantity capped at ${maxQty}.`,
+        );
+        newItems[index].quantity = maxQty;
+        setItems(newItems);
+        return;
+      }
+    }
+
     newItems[index].quantity = newQuantity;
     setItems(newItems);
   };
@@ -237,6 +276,15 @@ export default function EditOrderModal({
     const variant = item.availableVariants?.find((v) => v.id === variantId);
 
     if (!variant) return;
+
+    // Check stock availability
+    const available = getAvailableStock(variant);
+    if (available <= 0) {
+      message.error(
+        `"${getVariantLabel(variant)}" is out of stock. Please select a different variant.`,
+      );
+      return;
+    }
 
     item.variantId = variantId;
     item.variantName = variant.variantAttributes
@@ -271,6 +319,17 @@ export default function EditOrderModal({
     }
 
     const variant = product.variants?.find((v) => v.id === pendingVariantId);
+
+    // Check stock availability
+    if (variant) {
+      const available = getAvailableStock(variant);
+      if (available <= 0) {
+        message.error(
+          `"${getVariantLabel(variant)}" is out of stock and cannot be added to the order.`,
+        );
+        return;
+      }
+    }
 
     // Check if same productId + variantId already exists → merge quantity
     const existingIndex = items.findIndex(
@@ -361,14 +420,17 @@ export default function EditOrderModal({
       onClose();
     } catch (error: unknown) {
       console.error("Failed to update order:", error);
-      if (error && typeof error === "object" && "data" in error) {
-        const apiError = error as { data?: { message?: string } };
-        message.error(
-          apiError.data?.message || "Failed to update order. Please try again.",
-        );
-      } else {
-        message.error("Failed to update order. Please try again.");
+      let errorMsg = "Failed to update order. Please try again.";
+      if (error && typeof error === "object") {
+        if ("data" in error) {
+          const apiError = error as { data?: { message?: string } };
+          errorMsg = apiError.data?.message || errorMsg;
+        } else if ("message" in error) {
+          const jsError = error as { message?: string };
+          errorMsg = jsError.message || errorMsg;
+        }
       }
+      message.error(errorMsg);
     }
   };
 
@@ -403,11 +465,26 @@ export default function EditOrderModal({
             placeholder="Select variant"
             disabled={!canEdit}
           >
-            {record.availableVariants!.map((v) => (
-              <Option key={v.id} value={v.id}>
-                {getVariantLabel(v)}
-              </Option>
-            ))}
+            {record.availableVariants!.map((v) => {
+              const stock = getAvailableStock(v);
+              const isOOS = stock <= 0;
+              const isLowStock = stock > 0 && stock <= 10;
+              return (
+                <Option key={v.id} value={v.id} disabled={isOOS}>
+                  <span
+                    style={{
+                      color: isOOS
+                        ? "#ff4d4f"
+                        : isLowStock
+                          ? "#fa8c16"
+                          : undefined,
+                    }}
+                  >
+                    {getVariantLabel(v)}
+                  </span>
+                </Option>
+              );
+            })}
           </Select>
         );
       },
@@ -432,15 +509,25 @@ export default function EditOrderModal({
       title: "Qty",
       key: "quantity",
       width: 100,
-      render: (_: unknown, record: EditOrderItem, index: number) => (
-        <InputNumber
-          min={1}
-          value={record.quantity}
-          onChange={(value) => handleQuantityChange(index, value || 1)}
-          style={{ width: "100%" }}
-          disabled={!canEdit}
-        />
-      ),
+      render: (_: unknown, record: EditOrderItem, index: number) => {
+        const selectedVariant = record.availableVariants?.find(
+          (v) => v.id === record.variantId,
+        );
+        const maxQty = selectedVariant
+          ? getAvailableStock(selectedVariant)
+          : undefined;
+
+        return (
+          <InputNumber
+            min={1}
+            max={maxQty}
+            value={record.quantity}
+            onChange={(value) => handleQuantityChange(index, value || 1)}
+            style={{ width: "100%" }}
+            disabled={!canEdit}
+          />
+        );
+      },
     },
     {
       title: "Total",
@@ -502,9 +589,20 @@ export default function EditOrderModal({
     >
       {!canEdit && (
         <Alert
-          message="Order Cannot Be Edited"
+          title="Order Cannot Be Edited"
           description="Only orders with PENDING status can be edited."
           type="warning"
+          showIcon
+          style={{ marginBottom: 16 }}
+        />
+      )}
+
+      {canEdit && !order.assignedBranchId && (
+        <Alert
+          title="No Branch Assigned"
+          description="This order has no branch assigned yet. You can update customer info and delivery details, but
+to add or change order items, please assign a branch first using the 'Assign Branch' button."
+          type="info"
           showIcon
           style={{ marginBottom: 16 }}
         />
@@ -662,7 +760,6 @@ export default function EditOrderModal({
                 size="small"
               >
                 <Select
-                  showSearch
                   placeholder="Search and select a product to add"
                   onChange={(value: string) => {
                     setPendingProductId(value);
@@ -671,11 +768,22 @@ export default function EditOrderModal({
                   value={pendingProductId}
                   suffixIcon={<PlusOutlined />}
                   style={{ width: "100%" }}
-                  filterOption={(input, option) =>
-                    (option?.label?.toString() ?? "")
-                      .toLowerCase()
-                      .includes(input.toLowerCase())
-                  }
+                  showSearch={{
+                    filterOption: (input, option) =>
+                      String(option?.label)
+                        .toLowerCase()
+                        .includes(input.toLowerCase()),
+                  }}
+                  options={addableProducts?.map((product) => ({
+                    label: `${product.name} — ৳${Number(product.basePrice).toFixed(2)}${
+                      product.variants && product.variants.length > 0
+                        ? ` (${product.variants.length} variant${
+                            product.variants.length > 1 ? "s" : ""
+                          })`
+                        : ""
+                    }`,
+                    value: product.id,
+                  }))}
                 >
                   {addableProducts?.map((product) => (
                     <Option
@@ -705,11 +813,26 @@ export default function EditOrderModal({
                       value={pendingVariantId}
                       style={{ width: "100%" }}
                     >
-                      {pendingProduct.variants.map((v) => (
-                        <Option key={v.id} value={v.id}>
-                          {getVariantLabel(v)}
-                        </Option>
-                      ))}
+                      {pendingProduct.variants.map((v) => {
+                        const stock = getAvailableStock(v);
+                        const isOOS = stock <= 0;
+                        const isLowStock = stock > 0 && stock <= 10;
+                        return (
+                          <Option key={v.id} value={v.id} disabled={isOOS}>
+                            <span
+                              style={{
+                                color: isOOS
+                                  ? "#ff4d4f"
+                                  : isLowStock
+                                    ? "#fa8c16"
+                                    : undefined,
+                              }}
+                            >
+                              {getVariantLabel(v)}
+                            </span>
+                          </Option>
+                        );
+                      })}
                     </Select>
                   )}
 

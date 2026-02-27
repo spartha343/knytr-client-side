@@ -227,4 +227,5 @@ export interface IManualOrderWizardItem {
   price: number;
   quantity: number;
   subtotal: number;
+  availableStock?: number | null; // total available across all inventories (null = not tracked)
 }

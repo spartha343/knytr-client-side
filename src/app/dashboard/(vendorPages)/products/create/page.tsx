@@ -244,7 +244,7 @@ const CreateProductPage = () => {
           )}
         </Card>
 
-        <Card title=" Shipping (Optional)" style={{ marginBottom: 16 }}>
+        <Card title=" 📦 Shipping" style={{ marginBottom: 16 }}>
           <Row gutter={[16, 16]}>
             <Col xs={24} md={6}>
               <FormInput
@@ -253,6 +253,10 @@ const CreateProductPage = () => {
                 placeholder="0.00"
                 type="number"
               />
+              <small style={{ color: "#888" }}>
+                Used for Pathao delivery calculation. Defaults to 0.5kg if not
+                set.
+              </small>
             </Col>
             <Col xs={24} md={6}>
               <FormInput

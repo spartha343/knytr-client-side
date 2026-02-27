@@ -19,6 +19,13 @@ import {
 import { IProduct } from "@/types/product";
 import useDebounce from "@/hooks/useDebounce";
 
+interface IProductTable extends IProduct {
+  variantCount?: number;
+  _count?: {
+    variants?: number;
+  };
+}
+
 const ProductsPage = () => {
   const [page, setPage] = useState(1);
   const [size, setSize] = useState(10);
@@ -117,7 +124,10 @@ const ProductsPage = () => {
       title: "Variants",
       dataIndex: "variants",
       key: "variants",
-      render: (variants: IProduct["variants"]) => variants?.length || 0,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      render: (_: any, record: IProductTable) => {
+        return record.variantCount || record._count?.variants || 0;
+      },
     },
     {
       title: "Status",

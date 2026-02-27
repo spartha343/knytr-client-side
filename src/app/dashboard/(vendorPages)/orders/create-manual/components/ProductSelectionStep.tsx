@@ -10,6 +10,7 @@ import {
   Space,
   Typography,
   Spin,
+  message,
 } from "antd";
 import {
   PlusOutlined,
@@ -83,9 +84,48 @@ const ProductSelectionStep = ({
     return variant.sku;
   };
 
+  // Helper: compute total available stock across all inventories for a variant
+  const getAvailableStock = (variant: IProductVariant): number => {
+    if (!variant.inventories || variant.inventories.length === 0) return 0;
+    return variant.inventories.reduce(
+      (sum, inv) => sum + Math.max(0, inv.quantity - inv.reservedQty),
+      0,
+    );
+  };
+
+  // Helper: get available stock for currently selected variant
+  const getSelectedVariantStock = (): number | null => {
+    if (!selectedProduct) return null;
+    if (!hasVariants) return null; // base products — no inventory tracking here
+    if (!selectedVariantId || !selectedProduct.variants) return null;
+    const variant = selectedProduct.variants.find(
+      (v: IProductVariant) => v.id === selectedVariantId,
+    );
+    if (!variant) return null;
+    return getAvailableStock(variant);
+  };
+
   const handleAddItem = () => {
     if (!selectedProductId || !selectedProduct) return;
     if (hasVariants && !selectedVariantId) return;
+
+    // Stock check for variant products
+    if (hasVariants && selectedVariantId) {
+      const stock = getSelectedVariantStock();
+      if (stock !== null && stock <= 0) {
+        message.error(
+          "This variant is out of stock and cannot be added to the order.",
+        );
+        return;
+      }
+      // Also check if requested quantity exceeds available stock
+      if (stock !== null && quantity > stock) {
+        message.error(
+          `Only ${stock} unit${stock !== 1 ? "s" : ""} available in stock. Please reduce the quantity.`,
+        );
+        return;
+      }
+    }
 
     const originalPrice = getPrice();
     const finalPrice = customPrice !== null ? customPrice : originalPrice;
@@ -112,6 +152,8 @@ const ProductSelectionStep = ({
             )?.sku
           : null;
 
+      const stockForItem = hasVariants ? getSelectedVariantStock() : null;
+
       const newItem: IManualOrderWizardItem = {
         id: `${selectedProductId}-${selectedVariantId || "base"}-${itemCounter}`,
         productId: selectedProductId,
@@ -122,6 +164,7 @@ const ProductSelectionStep = ({
         price: finalPrice,
         quantity,
         subtotal: finalPrice * quantity,
+        availableStock: stockForItem,
       };
 
       onItemsChange([...items, newItem]);
@@ -153,7 +196,10 @@ const ProductSelectionStep = ({
   const handleQuantityChange = (itemId: string, newQuantity: number | null) => {
     const updated = items.map((item) => {
       if (item.id !== itemId) return item;
-      const qty = newQuantity ?? 1;
+      let qty = newQuantity ?? 1;
+      if (item.availableStock !== null && item.availableStock !== undefined) {
+        qty = Math.min(qty, item.availableStock);
+      }
       return { ...item, quantity: qty, subtotal: item.price * qty };
     });
     onItemsChange(updated);
@@ -199,16 +245,44 @@ const ProductSelectionStep = ({
     {
       title: "Qty",
       key: "quantity",
-      width: 100,
-      render: (_: unknown, record: IManualOrderWizardItem) => (
-        <InputNumber
-          min={1}
-          max={1000}
-          value={record.quantity}
-          onChange={(value) => handleQuantityChange(record.id, value)}
-          style={{ width: "100%" }}
-        />
-      ),
+      width: 130,
+      render: (_: unknown, record: IManualOrderWizardItem) => {
+        const maxQty =
+          record.availableStock !== null && record.availableStock !== undefined
+            ? record.availableStock
+            : 1000;
+        const isLowStock =
+          record.availableStock !== null &&
+          record.availableStock !== undefined &&
+          record.availableStock <= 5 &&
+          record.availableStock > 0;
+        return (
+          <div>
+            <InputNumber
+              min={1}
+              max={maxQty}
+              value={record.quantity}
+              onChange={(value) => handleQuantityChange(record.id, value)}
+              style={{ width: "100%" }}
+            />
+            {record.availableStock !== null &&
+              record.availableStock !== undefined && (
+                <Text
+                  style={{
+                    fontSize: 11,
+                    color: isLowStock ? "#fa8c16" : "#52c41a",
+                    display: "block",
+                    marginTop: 2,
+                  }}
+                >
+                  {isLowStock
+                    ? `⚠ Only ${record.availableStock} left`
+                    : `✓ ${record.availableStock} in stock`}
+                </Text>
+              )}
+          </div>
+        );
+      },
     },
     {
       title: "Subtotal",
@@ -269,7 +343,17 @@ const ProductSelectionStep = ({
                 setCustomPrice(null);
               }}
               size="large"
-              showSearch
+              showSearch={{
+                optionFilterProp: "label",
+                filterOption: (input, option) =>
+                  String(option?.label)
+                    .toLowerCase()
+                    .includes(input.toLowerCase()),
+              }}
+              options={products.map((product) => ({
+                label: `${product.name} — ৳${Number(product.basePrice).toFixed(2)}`,
+                value: product.id,
+              }))}
               style={{ width: "100%" }}
             >
               {products.map((product: IProduct) => (
@@ -293,12 +377,36 @@ const ProductSelectionStep = ({
                 size="large"
                 style={{ width: "100%" }}
               >
-                {selectedProduct.variants.map((variant: IProductVariant) => (
-                  <Select.Option key={variant.id} value={variant.id}>
-                    {getVariantDisplay(variant)} — ৳
-                    {Number(variant.price).toFixed(2)}
-                  </Select.Option>
-                ))}
+                {selectedProduct.variants.map((variant: IProductVariant) => {
+                  const stock = getAvailableStock(variant);
+                  const isOOS = stock <= 0;
+                  const isLow = stock > 0 && stock <= 5;
+                  return (
+                    <Select.Option
+                      key={variant.id}
+                      value={variant.id}
+                      disabled={isOOS}
+                    >
+                      <span style={{ opacity: isOOS ? 0.45 : 1 }}>
+                        {getVariantDisplay(variant)} — ৳
+                        {Number(variant.price).toFixed(2)}{" "}
+                        {isOOS ? (
+                          <span style={{ color: "#ff4d4f", fontSize: 11 }}>
+                            (Out of Stock)
+                          </span>
+                        ) : isLow ? (
+                          <span style={{ color: "#fa8c16", fontSize: 11 }}>
+                            (Only {stock} left)
+                          </span>
+                        ) : (
+                          <span style={{ color: "#52c41a", fontSize: 11 }}>
+                            ({stock} in stock)
+                          </span>
+                        )}
+                      </span>
+                    </Select.Option>
+                  );
+                })}
               </Select>
             </Form.Item>
           )}
@@ -338,12 +446,54 @@ const ProductSelectionStep = ({
             />
           </Form.Item>
 
+          {/* Stock status for selected variant */}
+          {hasVariants &&
+            selectedVariantId &&
+            (() => {
+              const stock = getSelectedVariantStock();
+              if (stock === null) return null;
+              const isOOS = stock <= 0;
+              const isLow = stock > 0 && stock <= 5;
+              return (
+                <div
+                  style={{
+                    padding: "8px 12px",
+                    borderRadius: 6,
+                    background: isOOS
+                      ? "#fff2f0"
+                      : isLow
+                        ? "#fff7e6"
+                        : "#f6ffed",
+                    border: `1px solid ${isOOS ? "#ffccc7" : isLow ? "#ffd591" : "#b7eb8f"}`,
+                    color: isOOS ? "#ff4d4f" : isLow ? "#fa8c16" : "#52c41a",
+                    fontSize: 13,
+                    fontWeight: 500,
+                  }}
+                >
+                  {isOOS
+                    ? "❌ Out of Stock — Cannot add to order"
+                    : isLow
+                      ? `⚠️ Low Stock — Only ${stock} unit${stock !== 1 ? "s" : ""} available`
+                      : `✅ In Stock — ${stock} unit${stock !== 1 ? "s" : ""} available`}
+                </div>
+              );
+            })()}
+
           {/* Add Button */}
           <Button
             type="dashed"
             icon={<PlusOutlined />}
             onClick={handleAddItem}
-            disabled={!selectedProductId || (hasVariants && !selectedVariantId)}
+            disabled={
+              !selectedProductId ||
+              (hasVariants && !selectedVariantId) ||
+              (hasVariants &&
+                selectedVariantId !== null &&
+                (() => {
+                  const stock = getSelectedVariantStock();
+                  return stock !== null && stock <= 0;
+                })())
+            }
             size="large"
             block
           >

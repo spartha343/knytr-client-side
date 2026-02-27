@@ -134,9 +134,60 @@ const Header = () => {
 
   // Mobile menu items
   const mobileMenuItems = [
-    { key: "home", label: <Link href="/">Home</Link> },
-    { key: "products", label: <Link href="/products">Products</Link> },
-    // { key: "stores", label: <Link href="/stores">Stores</Link> },
+    {
+      key: "home",
+      label: (
+        <Link href="/" onClick={() => setMobileMenuOpen(false)}>
+          Home
+        </Link>
+      ),
+    },
+    {
+      key: "products",
+      label: (
+        <Link href="/products" onClick={() => setMobileMenuOpen(false)}>
+          Products
+        </Link>
+      ),
+    },
+    {
+      key: "dashboard",
+      label: (
+        <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)}>
+          Dashboard
+        </Link>
+      ),
+    },
+    ...(!isAuthenticated
+      ? [
+          {
+            key: "signin",
+            label: (
+              <span
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  handleSignIn();
+                }}
+              >
+                Sign In
+              </span>
+            ),
+          },
+          {
+            key: "signup",
+            label: (
+              <span
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  handleSignUp();
+                }}
+              >
+                Sign Up
+              </span>
+            ),
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -189,7 +240,12 @@ const Header = () => {
             {/* Logo */}
             <Link
               href="/"
-              style={{ fontSize: "24px", fontWeight: "bold", color: "#1890ff" }}
+              style={{
+                fontSize: "clamp(16px, 4vw, 24px)",
+                fontWeight: "bold",
+                color: "#1890ff",
+                whiteSpace: "nowrap",
+              }}
             >
               KNYTR
             </Link>
@@ -228,7 +284,7 @@ const Header = () => {
 
           {/* Right Side */}
           <Space size="middle">
-            <Link href="/dashboard">
+            <Link href="/dashboard" className="desktop-only">
               <Button type="text">Dashboard</Button>
             </Link>
 
@@ -286,10 +342,22 @@ const Header = () => {
                   </Dropdown>
                 ) : (
                   <Space>
-                    <Button onClick={handleSignIn}>Sign In</Button>
-                    <Button type="primary" onClick={handleSignUp}>
-                      Sign Up
-                    </Button>
+                    <span className="desktop-only">
+                      <Space>
+                        <Button onClick={handleSignIn}>Sign In</Button>
+                        <Button type="primary" onClick={handleSignUp}>
+                          Sign Up
+                        </Button>
+                      </Space>
+                    </span>
+                    <span className="mobile-only">
+                      <Button
+                        type="primary"
+                        icon={<UserOutlined />}
+                        onClick={handleSignIn}
+                        size="small"
+                      />
+                    </span>
                   </Space>
                 )}
               </>

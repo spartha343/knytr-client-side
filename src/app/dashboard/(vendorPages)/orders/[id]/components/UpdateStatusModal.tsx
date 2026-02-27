@@ -36,13 +36,9 @@ const STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   CONFIRMED: [OrderStatus.PROCESSING],
   PROCESSING: [OrderStatus.READY_FOR_PICKUP],
   READY_FOR_PICKUP: [OrderStatus.SHIPPED],
-  SHIPPED: [
-    OrderStatus.OUT_FOR_DELIVERY,
-    OrderStatus.DELIVERED,
-    OrderStatus.RETURNED,
-  ],
-  OUT_FOR_DELIVERY: [OrderStatus.DELIVERED, OrderStatus.RETURNED],
-  DELIVERED: [OrderStatus.RETURNED],
+  SHIPPED: [],
+  OUT_FOR_DELIVERY: [],
+  DELIVERED: [],
   CANCELLED: [],
   RETURNED: [],
 };
@@ -84,7 +80,8 @@ const UpdateStatusModal = ({
       missing.push("Delivery address (min 10 characters)");
     if (!order.deliveryLocation) missing.push("Delivery location");
     if (!order.assignedBranchId) missing.push("Assigned branch");
-    if (!order.items || order.items.length === 0) missing.push("At least one order item");
+    if (!order.items || order.items.length === 0)
+      missing.push("At least one order item");
     return missing;
   };
 
@@ -133,8 +130,10 @@ const UpdateStatusModal = ({
       message.success("Order status updated successfully!");
       handleClose();
     } catch (error: unknown) {
-      console.error("Failed to update status:", error);
-      message.error("Failed to update order status. Please try again.");
+      const errMsg =
+        (error as { data?: { message?: string } })?.data?.message ??
+        "Failed to update order status. Please try again.";
+      message.error(errMsg);
     }
   };
 
@@ -249,7 +248,7 @@ const UpdateStatusModal = ({
             <Alert
               type="warning"
               showIcon
-              message="Cannot confirm order — required fields are missing"
+              title="Cannot confirm order — required fields are missing"
               description={
                 <ul style={{ margin: "4px 0 0 0", paddingLeft: 20 }}>
                   {missingFields.map((field) => (
@@ -271,7 +270,8 @@ const UpdateStatusModal = ({
               disabled={
                 !newStatus ||
                 validTransitions.length === 0 ||
-                (newStatus === OrderStatus.CONFIRMED && missingFields.length > 0)
+                (newStatus === OrderStatus.CONFIRMED &&
+                  missingFields.length > 0)
               }
             >
               Update Status
