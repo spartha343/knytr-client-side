@@ -100,6 +100,27 @@ export const pathaoApi = baseApi.injectEndpoints({
       invalidatesTags: [tagTypes.pathao],
     }),
 
+    // Link existing Pathao store (no API call to Pathao — saves directly to our DB)
+    linkExistingStore: build.mutation({
+      query: (data: {
+        branchId: string;
+        pathaoStoreId: number;
+        name: string;
+        contactName: string;
+        contactNumber: string;
+        secondaryContact?: string;
+        address: string;
+        cityId: number;
+        zoneId: number;
+        areaId: number;
+      }) => ({
+        url: `${PATHAO_URL}/stores/link`,
+        method: "POST",
+        data,
+      }),
+      invalidatesTags: [tagTypes.pathao, tagTypes.pathaoStore],
+    }),
+
     // Get credentials by branch ID (Vendor)
     getCredentialsByBranch: build.query<IPathaoCredentials, string>({
       query: (branchId: string) => ({
@@ -119,11 +140,21 @@ export const pathaoApi = baseApi.injectEndpoints({
       invalidatesTags: [tagTypes.order, tagTypes.pathao],
     }),
 
-    getStoreByBranch: build.query<{ data: IPathaoStore | null }, string>({
+    // getStoreByBranch: build.query<{ data: IPathaoStore | null }, string>({
+    //   query: (branchId) => ({
+    //     url: `/pathao/stores/branch/${branchId}`,
+    //     method: "GET",
+    //   }),
+    //   providesTags: [tagTypes.pathaoStore],
+    // }),
+
+    getStoreByBranch: build.query<IPathaoStore | null, string>({
       query: (branchId) => ({
         url: `/pathao/stores/branch/${branchId}`,
         method: "GET",
       }),
+      transformResponse: (response: { data: IPathaoStore | null }) =>
+        response.data,
       providesTags: [tagTypes.pathaoStore],
     }),
 
@@ -200,6 +231,7 @@ export const {
   useSaveCredentialsMutation,
   useGetCredentialsByBranchQuery,
   useRegisterStoreMutation,
+  useLinkExistingStoreMutation,
   useGetStoreByBranchQuery,
   useRetryDeliveryMutation,
   useSyncDeliveryStatusMutation,

@@ -14,6 +14,7 @@ import OrderItemsList from "./components/OrderItemsList";
 import PaymentSummaryCard from "./components/PaymentSummaryCard";
 import StoreContactCard from "./components/StoreContactCard";
 import CancelOrderModal from "./components/CancelOrderModal";
+import { getBaseUrl } from "@/helpers/config/envConfig";
 
 const CustomerOrderDetailPage = () => {
   const params = useParams();
@@ -125,7 +126,10 @@ const CustomerOrderDetailPage = () => {
           onCancelClick={() => setIsCancelModalOpen(true)}
           onDownloadInvoice={() => {
             // We'll implement invoice download later
-            window.open(`/api/orders/${order.id}/invoice`, "_blank");
+            window.open(
+              `${getBaseUrl().replace("/api/v1", "")}/api/v1/orders/${order.id}/invoice`,
+              "_blank",
+            );
           }}
         />
 

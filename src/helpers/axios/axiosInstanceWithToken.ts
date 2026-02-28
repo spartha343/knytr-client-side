@@ -2,7 +2,6 @@ import { auth } from "@/firebase/firebase.config";
 import axios from "axios";
 import { getBaseUrl } from "../config/envConfig";
 
-// TODO: handle the NEXT_PUBLIC_API_BASE_URL properly
 const axiosInstanceWithToken = axios.create({
   baseURL: getBaseUrl(),
   withCredentials: true,
