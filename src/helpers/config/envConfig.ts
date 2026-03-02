@@ -63,3 +63,7 @@ export const validateEnv = () => {
     }
   }
 };
+
+export const getMetaPixelId = (): string | null => {
+  return process.env.NEXT_PUBLIC_META_PIXEL_ID_LIMON || null;
+};

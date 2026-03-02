@@ -20,7 +20,7 @@ import {
   Space,
 } from "antd";
 import Link from "next/link";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Container from "@/components/shared/Container";
 import {
   useGetPublicProductByStoreAndSlugQuery,
@@ -53,6 +53,7 @@ const ProductDetailPage = () => {
   const { data: dbCartResponse } = useGetCartQuery(undefined, {
     skip: !isAuthenticated,
   });
+
   const dbCart = dbCartResponse as ICart | undefined;
   const storeSlug = params.storeSlug as string;
   const productSlug = params.productSlug as string;
@@ -149,6 +150,24 @@ const ProductDetailPage = () => {
       0,
     );
   }, [selectedVariant]);
+
+  // Fire ViewContent pixel event when product loads
+  useEffect(() => {
+    if (!product || !selectedVariant) return;
+    const price =
+      selectedVariant?.price != null
+        ? Number(selectedVariant.price)
+        : Number(product.basePrice);
+    if (typeof window !== "undefined" && window.fbq) {
+      window.fbq("track", "ViewContent", {
+        content_ids: [product.id],
+        content_name: product.name,
+        content_type: "product",
+        value: price,
+        currency: "BDT",
+      });
+    }
+  }, [product, selectedVariant]);
 
   // Handlers
   const handleAddToCart = async () => {

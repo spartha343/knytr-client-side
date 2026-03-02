@@ -38,6 +38,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import PathaoLocationSelector from "@/components/pathao/PathaoLocationSelector";
 import FormTextArea from "@/components/Forms/FormTextArea";
+import { useEffect } from "react";
 
 const { Title, Text } = Typography;
 
@@ -208,6 +209,16 @@ const CheckoutPage = () => {
     );
   }, [storeTotals]);
 
+  useEffect(() => {
+    if (cartItems.length > 0 && typeof window !== "undefined" && window.fbq) {
+      window.fbq("track", "InitiateCheckout", {
+        num_items: cartItems.length,
+        value: grandTotal,
+        currency: "BDT",
+      });
+    }
+  }, [cartItems.length, grandTotal]);
+
   const handleSubmit = async (formData: {
     customerPhone: string;
     customerName?: string;
@@ -283,6 +294,14 @@ const CheckoutPage = () => {
         );
       } else {
         message.success("Order placed successfully!");
+      }
+
+      if (typeof window !== "undefined" && window.fbq) {
+        window.fbq("track", "Purchase", {
+          value: grandTotal,
+          currency: "BDT",
+          num_items: cartItems.length,
+        });
       }
 
       // Clear guest cart if not authenticated
