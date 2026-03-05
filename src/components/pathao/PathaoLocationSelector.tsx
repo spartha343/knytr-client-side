@@ -95,7 +95,7 @@ const PathaoLocationSelector = ({
       <Form.Item
         label={
           <span>
-            <EnvironmentOutlined /> Zone ( থানা )
+            <EnvironmentOutlined /> Zone
           </span>
         }
         required={required}
