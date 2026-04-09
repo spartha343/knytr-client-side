@@ -15,9 +15,11 @@ export const ProductStockStatus = ({ totalStock }: ProductStockStatusProps) => {
   return (
     <div style={{ marginBottom: "24px" }}>
       {totalStock > 0 ? (
-        <Text type="success" strong>
-          In Stock ({totalStock} available)
-        </Text>
+        <>
+          <Text type="success" strong>
+            In Stock ({totalStock} available)
+          </Text>
+        </>
       ) : (
         <Text type="danger" strong>
           Out of Stock

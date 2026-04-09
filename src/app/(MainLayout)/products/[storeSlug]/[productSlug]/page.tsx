@@ -290,7 +290,7 @@ const ProductDetailPage = () => {
             category={product.category}
           />
 
-          <Space orientation="horizontal">
+          <Space orientation="vertical">
             {/* Price Section */}
             <ProductPricing
               currentPrice={currentPrice}
